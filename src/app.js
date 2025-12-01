@@ -1,8 +1,10 @@
 // Tauri API (with fallback for development)
-const invoke = window.__TAURI__?.tauri?.invoke || (async () => {});
+const invoke = window.__TAURI__?.tauri?.invoke || window.__TAURI__?.invoke || (async () => {});
 const listen = window.__TAURI__?.event?.listen || (async () => () => {});
 
 // DOM要素
+const activeAppNameEl = document.getElementById('active-app-name');
+const activeAppNameTextEl = document.getElementById('active-app-name-text');
 const keyInputContainer = document.getElementById('key-input-container');
 const keyInputDisplay = document.getElementById('key-input-display');
 const searchContainer = document.getElementById('search-container');
@@ -10,21 +12,19 @@ const searchInput = document.getElementById('search-input');
 const resultsList = document.getElementById('results-list');
 const noResults = document.getElementById('no-results');
 const resultCount = document.getElementById('result-count');
-const categoryFilter = document.getElementById('category-filter');
-const platformMacBtn = document.getElementById('platform-mac');
-const platformWinBtn = document.getElementById('platform-win');
 const modeToggle = document.getElementById('mode-toggle');
 const modeToggleText = document.getElementById('mode-toggle-text');
 
 // 状態
 let currentPlatform = 'mac';
-let currentCategory = 'all';
 let selectedIndex = 0;
 let filteredShortcuts = [];
 let expandedIndex = -1;
 let searchMode = 'key'; // 'key' または 'text'
 let pressedKeys = new Set();
 let pressedKeyDetails = new Map(); // key -> { code, display }
+let activeAppName = null; // アクティブなアプリ名
+let activeAppCategory = null; // アクティブなアプリに対応するカテゴリ
 
 // カテゴリアイコンマッピング
 const categoryIcons = {
@@ -94,19 +94,12 @@ async function init() {
     console.log('Platform detection failed, defaulting to mac');
   }
 
-  // カテゴリボタンを生成
-  generateCategoryButtons();
-
   // 初期表示
   filterAndDisplay();
 
   // イベントリスナー（テキスト検索用）
   searchInput.addEventListener('input', handleTextSearch);
   searchInput.addEventListener('keydown', handleTextModeKeydown);
-
-  // プラットフォーム切り替え
-  platformMacBtn.addEventListener('click', () => setPlatform('mac'));
-  platformWinBtn.addEventListener('click', () => setPlatform('windows'));
 
   // モード切り替え
   modeToggle.addEventListener('click', () => setSearchMode('text'));
@@ -119,13 +112,38 @@ async function init() {
   // ウィンドウがフォーカスを失った時にキーをリセット
   window.addEventListener('blur', resetPressedKeys);
 
-  // Tauriイベントリスナー
-  await listen('window-shown', () => {
+  // Tauriイベントリスナー（アクティブアプリ名を受け取る）
+  try {
+    await listen('window-shown', (event) => {
+      // アクティブアプリ名を取得
+      activeAppName = event.payload || null;
+      activeAppCategory = activeAppName ? (appToCategoryMap[activeAppName] || null) : null;
+
+      // UIにアプリ名を表示（両方のモードで表示）
+      const displayText = activeAppName
+        ? (activeAppCategory ? `${activeAppName}` : `${activeAppName}`)
+        : '-';
+      activeAppNameEl.textContent = displayText;
+      if (activeAppNameTextEl) {
+        activeAppNameTextEl.textContent = displayText;
+      }
+
+    // 状態をリセット
+    selectedIndex = 0;
+    expandedIndex = -1;
+    resetPressedKeys();
+
     if (searchMode === 'text') {
+      searchInput.value = '';
       searchInput.focus();
       searchInput.select();
     }
-  });
+
+    filterAndDisplay();
+    });
+  } catch (e) {
+    // イベントリスナー登録に失敗
+  }
 }
 
 // 検索モード切り替え
@@ -283,36 +301,9 @@ function filterByPressedKeys() {
   filterAndDisplay();
 }
 
-// カテゴリボタン生成
-function generateCategoryButtons() {
-  const categories = [...new Set(shortcuts.map(s => s.category))];
-
-  categories.forEach(category => {
-    const btn = document.createElement('button');
-    btn.className = 'category-btn';
-    btn.dataset.category = category;
-    btn.textContent = category;
-    btn.addEventListener('click', () => setCategory(category));
-    categoryFilter.appendChild(btn);
-  });
-}
-
-// プラットフォーム切り替え
+// プラットフォーム設定（自動検出のみ）
 function setPlatform(platform) {
   currentPlatform = platform;
-  platformMacBtn.classList.toggle('active', platform === 'mac');
-  platformWinBtn.classList.toggle('active', platform === 'windows');
-  filterAndDisplay();
-}
-
-// カテゴリ切り替え
-function setCategory(category) {
-  currentCategory = category;
-  document.querySelectorAll('.category-btn').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.category === category);
-  });
-  selectedIndex = 0;
-  expandedIndex = -1;
   filterAndDisplay();
 }
 
@@ -377,9 +368,6 @@ function filterByKeys() {
   if (pressedKeys.size === 0) {
     // キーが押されていない場合は全て表示
     filteredShortcuts = shortcuts.filter(shortcut => {
-      if (currentCategory !== 'all' && shortcut.category !== currentCategory) {
-        return false;
-      }
       const platformKey = currentPlatform === 'mac' ? shortcut.mac : shortcut.windows;
       return platformKey !== '-';
     });
@@ -391,11 +379,6 @@ function filterByKeys() {
     .map(k => k.display.toLowerCase());
 
   filteredShortcuts = shortcuts.filter(shortcut => {
-    // カテゴリフィルター
-    if (currentCategory !== 'all' && shortcut.category !== currentCategory) {
-      return false;
-    }
-
     // プラットフォームフィルター
     const platformKey = currentPlatform === 'mac' ? shortcut.mac : shortcut.windows;
     if (platformKey === '-') {
@@ -472,11 +455,6 @@ function filterByText() {
   const query = searchInput.value.toLowerCase().trim();
 
   filteredShortcuts = shortcuts.filter(shortcut => {
-    // カテゴリフィルター
-    if (currentCategory !== 'all' && shortcut.category !== currentCategory) {
-      return false;
-    }
-
     // プラットフォームフィルター
     const platformKey = currentPlatform === 'mac' ? shortcut.mac : shortcut.windows;
     if (platformKey === '-') {

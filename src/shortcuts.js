@@ -1,3 +1,63 @@
+// プロセス名からカテゴリへのマッピング
+const appToCategoryMap = {
+  // ブラウザ
+  'chrome': 'ブラウザ',
+  'Google Chrome': 'ブラウザ',
+  'msedge': 'ブラウザ',
+  'Microsoft Edge': 'ブラウザ',
+  'firefox': 'ブラウザ',
+  'Firefox': 'ブラウザ',
+  'Safari': 'ブラウザ',
+  'brave': 'ブラウザ',
+  'Brave Browser': 'ブラウザ',
+  'opera': 'ブラウザ',
+  'Opera': 'ブラウザ',
+  'vivaldi': 'ブラウザ',
+  'Vivaldi': 'ブラウザ',
+  'Arc': 'ブラウザ',
+
+  // VS Code
+  'Code': 'VS Code',
+  'code': 'VS Code',
+  'Visual Studio Code': 'VS Code',
+  'Code - Insiders': 'VS Code',
+  'VSCodium': 'VS Code',
+  'Cursor': 'VS Code',
+
+  // ファイルマネージャー
+  'explorer': 'Finder / エクスプローラー',
+  'Explorer': 'Finder / エクスプローラー',
+  'Finder': 'Finder / エクスプローラー',
+
+  // Slack
+  'slack': 'Slack',
+  'Slack': 'Slack',
+
+  // Excel / スプレッドシート
+  'EXCEL': 'Excel / スプレッドシート',
+  'excel': 'Excel / スプレッドシート',
+  'Microsoft Excel': 'Excel / スプレッドシート',
+  'Google Sheets': 'Excel / スプレッドシート',
+  'Numbers': 'Excel / スプレッドシート',
+
+  // ターミナル
+  'WindowsTerminal': 'ターミナル',
+  'Windows Terminal': 'ターミナル',
+  'cmd': 'ターミナル',
+  'powershell': 'ターミナル',
+  'PowerShell': 'ターミナル',
+  'Terminal': 'ターミナル',
+  'iTerm2': 'ターミナル',
+  'iTerm': 'ターミナル',
+  'Alacritty': 'ターミナル',
+  'Hyper': 'ターミナル',
+  'Warp': 'ターミナル',
+
+  // Zoom
+  'Zoom': 'Zoom',
+  'zoom': 'Zoom',
+};
+
 const shortcuts = [
   // ========== 一般的なショートカット ==========
   { id: 1, category: "一般", action: "コピー", mac: "⌘ + C", windows: "Ctrl + C", description: "選択したテキストやファイルをクリップボードにコピー", tags: ["コピー", "copy", "クリップボード"] },
