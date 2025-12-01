@@ -2,9 +2,8 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use tauri::{
-    AppHandle, CustomMenuItem, GlobalShortcutManager, Manager,
-    SystemTray, SystemTrayEvent, SystemTrayMenu, SystemTrayMenuItem,
-    WindowEvent,
+    AppHandle, CustomMenuItem, GlobalShortcutManager, Manager, SystemTray, SystemTrayEvent,
+    SystemTrayMenu, SystemTrayMenuItem, WindowEvent,
 };
 
 // ウィンドウの表示/非表示を切り替え
@@ -80,7 +79,7 @@ fn main() {
         })
         .setup(|app| {
             let app_handle = app.handle();
-            
+
             // グローバルショートカットを登録
             // Mac: Cmd+Shift+K, Windows/Linux: Ctrl+Shift+K
             let shortcut = if cfg!(target_os = "macos") {
@@ -90,24 +89,22 @@ fn main() {
             };
 
             let app_handle_clone = app_handle.clone();
-            if let Err(e) = app.global_shortcut_manager()
-                .register(shortcut, move || {
-                    toggle_window(&app_handle_clone);
-                }) {
-                eprintln!("Warning: Failed to register global shortcut ({}): {:?}", shortcut, e);
+            if let Err(e) = app.global_shortcut_manager().register(shortcut, move || {
+                toggle_window(&app_handle_clone);
+            }) {
+                eprintln!("Warning: Failed to register global shortcut ({shortcut}): {e:?}");
             }
 
             // Escキーでウィンドウを閉じる
-            let app_handle_clone = app_handle.clone();
-            if let Err(e) = app.global_shortcut_manager()
-                .register("Escape", move || {
-                    if let Some(window) = app_handle_clone.get_window("main") {
-                        if window.is_visible().unwrap_or(false) && window.is_focused().unwrap_or(false) {
-                            hide_window(&app_handle_clone);
-                        }
+            if let Err(e) = app.global_shortcut_manager().register("Escape", move || {
+                if let Some(window) = app_handle.get_window("main") {
+                    if window.is_visible().unwrap_or(false) && window.is_focused().unwrap_or(false)
+                    {
+                        hide_window(&app_handle);
                     }
-                }) {
-                eprintln!("Warning: Failed to register Escape shortcut: {:?}", e);
+                }
+            }) {
+                eprintln!("Warning: Failed to register Escape shortcut: {e:?}");
             }
 
             // 初期表示
@@ -115,6 +112,9 @@ fn main() {
                 let _ = window.center();
                 let _ = window.show();
                 let _ = window.set_focus();
+                // devtoolsを閉じる
+                #[cfg(debug_assertions)]
+                window.close_devtools();
             }
 
             Ok(())
