@@ -1,0 +1,22 @@
+{
+  "name": "shortcut-finder",
+  "version": "1.0.0",
+  "description": "Spotlight-like shortcut key finder for Windows and Mac",
+  "scripts": {
+    "tauri": "tauri",
+    "dev": "tauri dev",
+    "build": "tauri build",
+    "build:debug": "tauri build --debug"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "@tauri-apps/cli": "^1.5",
+    "eslint": "^9.39.1",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^16.5.0",
+    "prettier": "^3.7.3"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^1.5"
+  }
+}
