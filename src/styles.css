@@ -378,6 +378,31 @@ body {
   margin-right: 3px;
 }
 
+.footer-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.config-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.config-btn:hover {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
 .result-count {
   color: var(--text-secondary);
 }

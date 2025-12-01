@@ -14,6 +14,7 @@ const noResults = document.getElementById('no-results');
 const resultCount = document.getElementById('result-count');
 const modeToggle = document.getElementById('mode-toggle');
 const modeToggleText = document.getElementById('mode-toggle-text');
+const openConfigBtn = document.getElementById('open-config-btn');
 
 // 状態
 let currentPlatform = 'mac';
@@ -25,6 +26,45 @@ let pressedKeys = new Set();
 let pressedKeyDetails = new Map(); // key -> { code, display }
 let activeAppName = null; // アクティブなアプリ名
 let activeAppCategory = null; // アクティブなアプリに対応するカテゴリ
+let shortcuts = []; // バックエンドから読み込むショートカットデータ
+
+// プロセス名からカテゴリへのマッピング
+const appToCategoryMap = {
+  // ブラウザ
+  'chrome': 'ブラウザ',
+  'Google Chrome': 'ブラウザ',
+  'msedge': 'ブラウザ',
+  'Microsoft Edge': 'ブラウザ',
+  'firefox': 'ブラウザ',
+  'Firefox': 'ブラウザ',
+  'Safari': 'ブラウザ',
+  'brave': 'ブラウザ',
+  'Brave Browser': 'ブラウザ',
+  // VS Code
+  'Code': 'VS Code',
+  'code': 'VS Code',
+  'Visual Studio Code': 'VS Code',
+  'Cursor': 'VS Code',
+  // ファイルマネージャー
+  'explorer': 'Finder / エクスプローラー',
+  'Explorer': 'Finder / エクスプローラー',
+  'Finder': 'Finder / エクスプローラー',
+  // Slack
+  'slack': 'Slack',
+  'Slack': 'Slack',
+  // Excel / スプレッドシート
+  'EXCEL': 'Excel / スプレッドシート',
+  'excel': 'Excel / スプレッドシート',
+  // ターミナル
+  'WindowsTerminal': 'ターミナル',
+  'Windows Terminal': 'ターミナル',
+  'cmd': 'ターミナル',
+  'powershell': 'ターミナル',
+  'Terminal': 'ターミナル',
+  // Zoom
+  'Zoom': 'Zoom',
+  'zoom': 'Zoom',
+};
 
 // カテゴリアイコンマッピング
 const categoryIcons = {
@@ -94,6 +134,14 @@ async function init() {
     console.log('Platform detection failed, defaulting to mac');
   }
 
+  // ショートカットデータをバックエンドから読み込む
+  try {
+    shortcuts = await invoke('get_shortcuts');
+  } catch (e) {
+    console.log('Failed to load shortcuts from backend, using empty list');
+    shortcuts = [];
+  }
+
   // 初期表示
   filterAndDisplay();
 
@@ -104,6 +152,9 @@ async function init() {
   // モード切り替え
   modeToggle.addEventListener('click', () => setSearchMode('text'));
   modeToggleText.addEventListener('click', () => setSearchMode('key'));
+
+  // 設定ファイルを開くボタン
+  openConfigBtn.addEventListener('click', openConfigFile);
 
   // キー入力モードのイベントリスナー
   document.addEventListener('keydown', handleGlobalKeydown);
@@ -350,6 +401,15 @@ async function hideWindow() {
     await invoke('hide_main_window');
   } catch (e) {
     console.log('Hide window failed');
+  }
+}
+
+// 設定ファイルを開く
+async function openConfigFile() {
+  try {
+    await invoke('open_config_file');
+  } catch (e) {
+    console.log('Failed to open config file:', e);
   }
 }
 
