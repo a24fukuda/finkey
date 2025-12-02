@@ -25,13 +25,97 @@ pub struct Shortcut {
     pub tags: Vec<String>,
 }
 
-// 設定ファイルの構造体
+// プラットフォーム固有のアプリマッチング設定
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Config {
+pub struct PlatformAppMatch {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub process: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub window: Option<String>,
+}
+
+// プラットフォーム別設定
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PlatformConfig {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub windows: Option<PlatformAppMatch>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub macos: Option<PlatformAppMatch>,
+}
+
+// アプリ設定（オブジェクト形式）
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AppRuleObject {
+    pub display: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub process: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub window: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub platform: Option<PlatformConfig>,
+}
+
+// アプリ設定（文字列またはオブジェクト）
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum AppRule {
+    Simple(String),
+    Detailed(AppRuleObject),
+}
+
+// 正規化されたアプリルール（内部処理用）
+#[derive(Debug, Clone, Serialize)]
+pub struct NormalizedAppRule {
+    pub display: String,
+    pub process: Option<String>,
+    pub window: Option<String>,
+}
+
+impl AppRule {
+    /// プラットフォームに応じて正規化されたルールを返す
+    pub fn normalize(&self, is_macos: bool) -> NormalizedAppRule {
+        match self {
+            Self::Simple(name) => NormalizedAppRule {
+                display: name.clone(),
+                process: Some(name.clone()),
+                window: Some(name.clone()),
+            },
+            Self::Detailed(obj) => {
+                // プラットフォーム別設定があればそれを使用
+                if let Some(ref platform) = obj.platform {
+                    let platform_match = if is_macos {
+                        platform.macos.as_ref()
+                    } else {
+                        platform.windows.as_ref()
+                    };
+
+                    if let Some(pm) = platform_match {
+                        return NormalizedAppRule {
+                            display: obj.display.clone(),
+                            process: pm.process.clone(),
+                            window: pm.window.clone(),
+                        };
+                    }
+                }
+
+                // プラットフォーム別設定がなければ共通設定を使用
+                NormalizedAppRule {
+                    display: obj.display.clone(),
+                    process: obj.process.clone(),
+                    window: obj.window.clone(),
+                }
+            }
+        }
+    }
+}
+
+// ショートカット設定ファイルの構造体
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ShortcutsConfig {
     pub shortcuts: Vec<Shortcut>,
 }
 
-impl Default for Config {
+impl Default for ShortcutsConfig {
     fn default() -> Self {
         Self {
             shortcuts: get_default_shortcuts(),
@@ -39,33 +123,181 @@ impl Default for Config {
     }
 }
 
-// 設定ファイルのパスを取得
-fn get_config_path() -> Option<PathBuf> {
-    let config_dir = dirs::config_dir()?;
-    let app_config_dir = config_dir.join("shortcut-finder");
-    Some(app_config_dir.join("shortcuts.json"))
+// アプリ設定ファイルの構造体
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AppsConfig {
+    pub apps: Vec<AppRule>,
 }
 
-// 設定ファイルを読み込む
-fn load_config() -> Config {
-    if let Some(path) = get_config_path() {
+impl Default for AppsConfig {
+    fn default() -> Self {
+        Self {
+            apps: get_default_apps(),
+        }
+    }
+}
+
+// デフォルトのアプリ設定
+fn get_default_apps() -> Vec<AppRule> {
+    vec![
+        // ブラウザ
+        AppRule::Detailed(AppRuleObject {
+            display: "Chrome".into(),
+            process: Some("chrome".into()),
+            window: Some("Google Chrome".into()),
+            platform: None,
+        }),
+        AppRule::Detailed(AppRuleObject {
+            display: "Edge".into(),
+            process: Some("msedge".into()),
+            window: Some("Microsoft Edge".into()),
+            platform: None,
+        }),
+        AppRule::Detailed(AppRuleObject {
+            display: "Firefox".into(),
+            process: Some("firefox".into()),
+            window: Some("Firefox".into()),
+            platform: None,
+        }),
+        AppRule::Simple("Safari".into()),
+        AppRule::Detailed(AppRuleObject {
+            display: "Brave".into(),
+            process: Some("brave".into()),
+            window: Some("Brave".into()),
+            platform: None,
+        }),
+        // エディタ
+        AppRule::Detailed(AppRuleObject {
+            display: "VS Code".into(),
+            process: Some("Code".into()),
+            window: Some("Visual Studio Code".into()),
+            platform: None,
+        }),
+        AppRule::Detailed(AppRuleObject {
+            display: "Cursor".into(),
+            process: Some("Cursor".into()),
+            window: Some("Cursor".into()),
+            platform: None,
+        }),
+        // ファイルマネージャー
+        AppRule::Detailed(AppRuleObject {
+            display: "エクスプローラー".into(),
+            process: Some("explorer".into()),
+            window: None,
+            platform: None,
+        }),
+        AppRule::Detailed(AppRuleObject {
+            display: "Finder".into(),
+            process: Some("Finder".into()),
+            window: None,
+            platform: None,
+        }),
+        // コミュニケーション
+        AppRule::Simple("Slack".into()),
+        AppRule::Simple("Zoom".into()),
+        // Office
+        AppRule::Detailed(AppRuleObject {
+            display: "Excel".into(),
+            process: Some("EXCEL".into()),
+            window: Some("Excel".into()),
+            platform: None,
+        }),
+        // ターミナル
+        AppRule::Detailed(AppRuleObject {
+            display: "Windows Terminal".into(),
+            process: Some("WindowsTerminal".into()),
+            window: Some("Windows Terminal".into()),
+            platform: None,
+        }),
+        AppRule::Detailed(AppRuleObject {
+            display: "Terminal".into(),
+            process: Some("Terminal".into()),
+            window: None,
+            platform: None,
+        }),
+        AppRule::Detailed(AppRuleObject {
+            display: "PowerShell".into(),
+            process: Some("powershell".into()),
+            window: Some("PowerShell".into()),
+            platform: None,
+        }),
+        AppRule::Detailed(AppRuleObject {
+            display: "コマンドプロンプト".into(),
+            process: Some("cmd".into()),
+            window: Some("コマンド プロンプト".into()),
+            platform: None,
+        }),
+    ]
+}
+
+// 設定ディレクトリのパスを取得
+fn get_config_dir() -> Option<PathBuf> {
+    let config_dir = dirs::config_dir()?;
+    Some(config_dir.join("shortcut-finder"))
+}
+
+// ショートカット設定ファイルのパスを取得
+fn get_shortcuts_config_path() -> Option<PathBuf> {
+    Some(get_config_dir()?.join("shortcuts.json"))
+}
+
+// アプリ設定ファイルのパスを取得
+fn get_apps_config_path() -> Option<PathBuf> {
+    Some(get_config_dir()?.join("apps.json"))
+}
+
+// ショートカット設定を読み込む
+fn load_shortcuts_config() -> ShortcutsConfig {
+    if let Some(path) = get_shortcuts_config_path() {
         if path.exists() {
             if let Ok(content) = fs::read_to_string(&path) {
-                if let Ok(config) = serde_json::from_str::<Config>(&content) {
+                if let Ok(config) = serde_json::from_str::<ShortcutsConfig>(&content) {
                     return config;
                 }
             }
         }
     }
     // ファイルがなければデフォルトを返し、設定ファイルを作成
-    let config = Config::default();
-    let _ = save_config(&config);
+    let config = ShortcutsConfig::default();
+    let _ = save_shortcuts_config(&config);
     config
 }
 
-// 設定ファイルを保存
-fn save_config(config: &Config) -> Result<(), String> {
-    let path = get_config_path().ok_or("設定ディレクトリが見つかりません")?;
+// ショートカット設定を保存
+fn save_shortcuts_config(config: &ShortcutsConfig) -> Result<(), String> {
+    let path = get_shortcuts_config_path().ok_or("設定ディレクトリが見つかりません")?;
+
+    // ディレクトリを作成
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent).map_err(|e| format!("ディレクトリ作成エラー: {e}"))?;
+    }
+
+    let json = serde_json::to_string_pretty(config).map_err(|e| format!("JSON変換エラー: {e}"))?;
+    fs::write(&path, json).map_err(|e| format!("ファイル書き込みエラー: {e}"))?;
+
+    Ok(())
+}
+
+// アプリ設定を読み込む
+fn load_apps_config() -> AppsConfig {
+    if let Some(path) = get_apps_config_path() {
+        if path.exists() {
+            if let Ok(content) = fs::read_to_string(&path) {
+                if let Ok(config) = serde_json::from_str::<AppsConfig>(&content) {
+                    return config;
+                }
+            }
+        }
+    }
+    // ファイルがなければデフォルトを返し、設定ファイルを作成
+    let config = AppsConfig::default();
+    let _ = save_apps_config(&config);
+    config
+}
+
+// アプリ設定を保存
+fn save_apps_config(config: &AppsConfig) -> Result<(), String> {
+    let path = get_apps_config_path().ok_or("設定ディレクトリが見つかりません")?;
 
     // ディレクトリを作成
     if let Some(parent) = path.parent() {
@@ -903,23 +1135,33 @@ fn get_default_shortcuts() -> Vec<Shortcut> {
     ]
 }
 
-// 前回アクティブだったアプリ名を保持
-static LAST_ACTIVE_APP: Mutex<Option<String>> = Mutex::new(None);
+// アクティブウィンドウ情報
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct ActiveWindowInfo {
+    pub process: Option<String>,
+    pub window: Option<String>,
+}
+
+// 前回アクティブだったアプリ情報を保持
+static LAST_ACTIVE_APP: Mutex<Option<ActiveWindowInfo>> = Mutex::new(None);
 // ウィンドウが表示中かどうか
 static WINDOW_VISIBLE: AtomicBool = AtomicBool::new(false);
 
 #[cfg(target_os = "windows")]
 mod active_window {
+    use super::ActiveWindowInfo;
     use windows::Win32::Foundation::HWND;
     use windows::Win32::System::ProcessStatus::GetModuleBaseNameW;
     use windows::Win32::System::Threading::{
         GetCurrentProcessId, OpenProcess, PROCESS_QUERY_INFORMATION, PROCESS_VM_READ,
     };
-    use windows::Win32::UI::WindowsAndMessaging::{GetForegroundWindow, GetWindowThreadProcessId};
+    use windows::Win32::UI::WindowsAndMessaging::{
+        GetForegroundWindow, GetWindowTextLengthW, GetWindowTextW, GetWindowThreadProcessId,
+    };
 
-    /// アクティブなウィンドウのプロセス名を取得（自分自身を除外）
+    /// アクティブなウィンドウの情報を取得（自分自身を除外）
     #[allow(unsafe_code)]
-    pub fn get_active_app_name() -> Option<String> {
+    pub fn get_active_window_info() -> Option<ActiveWindowInfo> {
         // SAFETY: Windows APIの呼び出しに必要
         unsafe {
             let hwnd: HWND = GetForegroundWindow();
@@ -937,62 +1179,87 @@ mod active_window {
             // 自分自身のプロセスIDと比較して除外
             let current_pid = GetCurrentProcessId();
             if process_id == current_pid {
-                // 自分自身がアクティブの場合はNoneを返す
                 return None;
             }
 
-            let process_handle = OpenProcess(
-                PROCESS_QUERY_INFORMATION | PROCESS_VM_READ,
-                false,
-                process_id,
-            )
-            .ok()?;
+            // プロセス名を取得
+            let process_name = {
+                let process_handle = OpenProcess(
+                    PROCESS_QUERY_INFORMATION | PROCESS_VM_READ,
+                    false,
+                    process_id,
+                )
+                .ok();
 
-            let mut buffer = [0u16; 260];
-            let len = GetModuleBaseNameW(process_handle, None, &mut buffer);
+                process_handle.and_then(|handle| {
+                    let mut buffer = [0u16; 260];
+                    let len = GetModuleBaseNameW(handle, None, &mut buffer);
+                    if len == 0 {
+                        None
+                    } else {
+                        let name = String::from_utf16_lossy(&buffer[..len as usize]);
+                        Some(
+                            name.trim_end_matches(".exe")
+                                .trim_end_matches(".EXE")
+                                .to_string(),
+                        )
+                    }
+                })
+            };
 
-            if len == 0 {
-                return None;
-            }
+            // ウィンドウタイトルを取得
+            let window_title = {
+                let len = GetWindowTextLengthW(hwnd);
+                if len > 0 {
+                    let mut buffer = vec![0u16; (len + 1) as usize];
+                    let actual_len = GetWindowTextW(hwnd, &mut buffer);
+                    if actual_len > 0 {
+                        Some(String::from_utf16_lossy(&buffer[..actual_len as usize]))
+                    } else {
+                        None
+                    }
+                } else {
+                    None
+                }
+            };
 
-            let name = String::from_utf16_lossy(&buffer[..len as usize]);
-            // .exe を除去（大文字小文字両方）
-            let name = name
-                .trim_end_matches(".exe")
-                .trim_end_matches(".EXE")
-                .to_string();
-            Some(name)
+            Some(ActiveWindowInfo {
+                process: process_name,
+                window: window_title,
+            })
         }
     }
 }
 
 #[cfg(target_os = "macos")]
 mod active_window {
+    use super::ActiveWindowInfo;
     /// macOS: ダミー実装
-    pub fn get_active_app_name() -> Option<String> {
+    pub fn get_active_window_info() -> Option<ActiveWindowInfo> {
         None
     }
 }
 
 #[cfg(not(any(target_os = "windows", target_os = "macos")))]
 mod active_window {
+    use super::ActiveWindowInfo;
     /// その他のOS: ダミー実装
-    pub fn get_active_app_name() -> Option<String> {
+    pub fn get_active_window_info() -> Option<ActiveWindowInfo> {
         None
     }
 }
 
 // 前回のアクティブアプリを更新する
 fn update_last_active_app() {
-    if let Some(app_name) = active_window::get_active_app_name() {
+    if let Some(info) = active_window::get_active_window_info() {
         if let Ok(mut last_app) = LAST_ACTIVE_APP.lock() {
-            *last_app = Some(app_name);
+            *last_app = Some(info);
         }
     }
 }
 
-// 前回のアクティブアプリを取得する
-fn get_last_active_app() -> Option<String> {
+// 前回のアクティブアプリ情報を取得する
+fn get_last_active_app() -> Option<ActiveWindowInfo> {
     LAST_ACTIVE_APP.lock().ok()?.clone()
 }
 
@@ -1058,35 +1325,125 @@ fn get_platform() -> String {
     }
 }
 
-// アクティブなアプリ名を取得するコマンド
+// アクティブなウィンドウ情報を取得するコマンド
 #[tauri::command]
-fn get_active_app() -> Option<String> {
-    active_window::get_active_app_name()
+fn get_active_app() -> Option<ActiveWindowInfo> {
+    active_window::get_active_window_info()
+}
+
+/// アクティブウィンドウにマッチするアプリを検索
+/// プロセス名またはウィンドウタイトルで部分一致（大文字小文字無視）
+fn match_apps(info: &ActiveWindowInfo, apps: &[AppRule]) -> Vec<NormalizedAppRule> {
+    let is_macos = cfg!(target_os = "macos");
+
+    apps.iter()
+        .filter_map(|rule| {
+            let normalized = rule.normalize(is_macos);
+            let mut matched = false;
+
+            // プロセス名でマッチ
+            if let (Some(ref rule_process), Some(ref info_process)) =
+                (&normalized.process, &info.process)
+            {
+                if info_process
+                    .to_lowercase()
+                    .contains(&rule_process.to_lowercase())
+                {
+                    matched = true;
+                }
+            }
+
+            // ウィンドウタイトルでマッチ
+            if !matched {
+                if let (Some(ref rule_window), Some(ref info_window)) =
+                    (&normalized.window, &info.window)
+                {
+                    if info_window
+                        .to_lowercase()
+                        .contains(&rule_window.to_lowercase())
+                    {
+                        matched = true;
+                    }
+                }
+            }
+
+            if matched {
+                Some(normalized)
+            } else {
+                None
+            }
+        })
+        .collect()
+}
+
+// マッチしたアプリ情報を取得するコマンド
+#[tauri::command]
+fn get_matched_apps(info: Option<ActiveWindowInfo>) -> Vec<NormalizedAppRule> {
+    let apps_config = load_apps_config();
+    match info {
+        Some(ref window_info) => match_apps(window_info, &apps_config.apps),
+        None => vec![],
+    }
 }
 
 // ショートカット一覧を取得するコマンド
 #[tauri::command]
 fn get_shortcuts() -> Vec<Shortcut> {
-    load_config().shortcuts
+    load_shortcuts_config().shortcuts
 }
 
 // 設定ファイルのパスを取得するコマンド
 #[tauri::command]
 fn get_config_file_path() -> Option<String> {
-    get_config_path().map(|p| p.to_string_lossy().to_string())
+    get_shortcuts_config_path().map(|p| p.to_string_lossy().to_string())
 }
 
 // ショートカットを保存するコマンド
 #[tauri::command]
 fn save_shortcuts(shortcuts: Vec<Shortcut>) -> Result<(), String> {
-    let config = Config { shortcuts };
-    save_config(&config)
+    let config = ShortcutsConfig { shortcuts };
+    save_shortcuts_config(&config)
 }
 
-// 設定ファイルを開くコマンド
+// ショートカット設定ファイルを開くコマンド
 #[tauri::command]
 fn open_config_file() -> Result<(), String> {
-    let path = get_config_path().ok_or("設定ファイルのパスが見つかりません")?;
+    let path = get_shortcuts_config_path().ok_or("設定ファイルのパスが見つかりません")?;
+
+    #[cfg(target_os = "windows")]
+    {
+        std::process::Command::new("cmd")
+            .args(["/c", "start", "", path.to_string_lossy().as_ref()])
+            .spawn()
+            .map_err(|e| format!("ファイルを開けませんでした: {e}"))?;
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        std::process::Command::new("open")
+            .arg(&path)
+            .spawn()
+            .map_err(|e| format!("ファイルを開けませんでした: {e}"))?;
+    }
+
+    #[cfg(target_os = "linux")]
+    {
+        std::process::Command::new("xdg-open")
+            .arg(&path)
+            .spawn()
+            .map_err(|e| format!("ファイルを開けませんでした: {e}"))?;
+    }
+
+    Ok(())
+}
+
+// アプリ設定ファイルを開くコマンド
+#[tauri::command]
+fn open_apps_config_file() -> Result<(), String> {
+    // ファイルが存在しない場合は作成する
+    let _ = load_apps_config();
+
+    let path = get_apps_config_path().ok_or("アプリ設定ファイルのパスが見つかりません")?;
 
     #[cfg(target_os = "windows")]
     {
@@ -1117,10 +1474,15 @@ fn open_config_file() -> Result<(), String> {
 
 fn create_system_tray() -> SystemTray {
     let show = CustomMenuItem::new("show".to_string(), "ウィンドウを表示");
+    let shortcuts_config =
+        CustomMenuItem::new("shortcuts_config".to_string(), "ショートカット設定を開く");
+    let apps_config = CustomMenuItem::new("apps_config".to_string(), "アプリ設定を開く");
     let quit = CustomMenuItem::new("quit".to_string(), "終了");
 
     let tray_menu = SystemTrayMenu::new()
         .add_item(show)
+        .add_item(shortcuts_config)
+        .add_item(apps_config)
         .add_native_item(SystemTrayMenuItem::Separator)
         .add_item(quit);
 
@@ -1137,6 +1499,12 @@ fn main() {
             SystemTrayEvent::MenuItemClick { id, .. } => match id.as_str() {
                 "show" => {
                     toggle_window(app);
+                }
+                "shortcuts_config" => {
+                    let _ = open_config_file();
+                }
+                "apps_config" => {
+                    let _ = open_apps_config_file();
                 }
                 "quit" => {
                     std::process::exit(0);
@@ -1213,10 +1581,12 @@ fn main() {
             hide_main_window,
             get_platform,
             get_active_app,
+            get_matched_apps,
             get_shortcuts,
             get_config_file_path,
             save_shortcuts,
-            open_config_file
+            open_config_file,
+            open_apps_config_file
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

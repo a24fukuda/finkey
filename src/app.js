@@ -15,6 +15,7 @@ const resultCount = document.getElementById('result-count');
 const modeToggle = document.getElementById('mode-toggle');
 const modeToggleText = document.getElementById('mode-toggle-text');
 const openConfigBtn = document.getElementById('open-config-btn');
+const openAppsConfigBtn = document.getElementById('open-apps-config-btn');
 
 // 状態
 let currentPlatform = 'mac';
@@ -24,47 +25,9 @@ let expandedIndex = -1;
 let searchMode = 'key'; // 'key' または 'text'
 let pressedKeys = new Set();
 let pressedKeyDetails = new Map(); // key -> { code, display }
-let activeAppName = null; // アクティブなアプリ名
-let activeAppCategory = null; // アクティブなアプリに対応するカテゴリ
+let activeWindowInfo = null; // アクティブなウィンドウ情報 { process, window }
+let matchedApps = []; // マッチしたアプリのリスト { display, category, process, window }
 let shortcuts = []; // バックエンドから読み込むショートカットデータ
-
-// プロセス名からカテゴリへのマッピング
-const appToCategoryMap = {
-  // ブラウザ
-  'chrome': 'ブラウザ',
-  'Google Chrome': 'ブラウザ',
-  'msedge': 'ブラウザ',
-  'Microsoft Edge': 'ブラウザ',
-  'firefox': 'ブラウザ',
-  'Firefox': 'ブラウザ',
-  'Safari': 'ブラウザ',
-  'brave': 'ブラウザ',
-  'Brave Browser': 'ブラウザ',
-  // VS Code
-  'Code': 'VS Code',
-  'code': 'VS Code',
-  'Visual Studio Code': 'VS Code',
-  'Cursor': 'VS Code',
-  // ファイルマネージャー
-  'explorer': 'Finder / エクスプローラー',
-  'Explorer': 'Finder / エクスプローラー',
-  'Finder': 'Finder / エクスプローラー',
-  // Slack
-  'slack': 'Slack',
-  'Slack': 'Slack',
-  // Excel / スプレッドシート
-  'EXCEL': 'Excel / スプレッドシート',
-  'excel': 'Excel / スプレッドシート',
-  // ターミナル
-  'WindowsTerminal': 'ターミナル',
-  'Windows Terminal': 'ターミナル',
-  'cmd': 'ターミナル',
-  'powershell': 'ターミナル',
-  'Terminal': 'ターミナル',
-  // Zoom
-  'Zoom': 'Zoom',
-  'zoom': 'Zoom',
-};
 
 // カテゴリアイコンマッピング
 const categoryIcons = {
@@ -155,6 +118,7 @@ async function init() {
 
   // 設定ファイルを開くボタン
   openConfigBtn.addEventListener('click', openConfigFile);
+  openAppsConfigBtn.addEventListener('click', openAppsConfigFile);
 
   // キー入力モードのイベントリスナー
   document.addEventListener('keydown', handleGlobalKeydown);
@@ -163,34 +127,46 @@ async function init() {
   // ウィンドウがフォーカスを失った時にキーをリセット
   window.addEventListener('blur', resetPressedKeys);
 
-  // Tauriイベントリスナー（アクティブアプリ名を受け取る）
+  // Tauriイベントリスナー（アクティブウィンドウ情報を受け取る）
   try {
-    await listen('window-shown', (event) => {
-      // アクティブアプリ名を取得
-      activeAppName = event.payload || null;
-      activeAppCategory = activeAppName ? (appToCategoryMap[activeAppName] || null) : null;
+    await listen('window-shown', async (event) => {
+      // アクティブウィンドウ情報を取得 { process, window }
+      activeWindowInfo = event.payload || null;
+
+      // バックエンドでアプリをマッチング
+      try {
+        matchedApps = await invoke('get_matched_apps', { info: activeWindowInfo });
+      } catch (e) {
+        console.log('Failed to get matched apps:', e);
+        matchedApps = [];
+      }
 
       // UIにアプリ名を表示（両方のモードで表示）
-      const displayText = activeAppName
-        ? (activeAppCategory ? `${activeAppName}` : `${activeAppName}`)
-        : '-';
+      let displayText = '-';
+      if (matchedApps.length > 0) {
+        // マッチしたアプリの表示名を表示（複数ある場合はカンマ区切り）
+        displayText = matchedApps.map(app => app.display).join(', ');
+      } else if (activeWindowInfo) {
+        // マッチしなかった場合はプロセス名を表示
+        displayText = activeWindowInfo.process || '-';
+      }
       activeAppNameEl.textContent = displayText;
       if (activeAppNameTextEl) {
         activeAppNameTextEl.textContent = displayText;
       }
 
-    // 状態をリセット
-    selectedIndex = 0;
-    expandedIndex = -1;
-    resetPressedKeys();
+      // 状態をリセット
+      selectedIndex = 0;
+      expandedIndex = -1;
+      resetPressedKeys();
 
-    if (searchMode === 'text') {
-      searchInput.value = '';
-      searchInput.focus();
-      searchInput.select();
-    }
+      if (searchMode === 'text') {
+        searchInput.value = '';
+        searchInput.focus();
+        searchInput.select();
+      }
 
-    filterAndDisplay();
+      filterAndDisplay();
     });
   } catch (e) {
     // イベントリスナー登録に失敗
@@ -404,12 +380,21 @@ async function hideWindow() {
   }
 }
 
-// 設定ファイルを開く
+// ショートカット設定ファイルを開く
 async function openConfigFile() {
   try {
     await invoke('open_config_file');
   } catch (e) {
     console.log('Failed to open config file:', e);
+  }
+}
+
+// アプリ設定ファイルを開く
+async function openAppsConfigFile() {
+  try {
+    await invoke('open_apps_config_file');
+  } catch (e) {
+    console.log('Failed to open apps config file:', e);
   }
 }
 
