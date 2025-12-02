@@ -2,6 +2,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -13,14 +14,56 @@ use tauri::{
     SystemTrayMenu, SystemTrayMenuItem, WindowEvent,
 };
 
-// ショートカットの構造体
+// キー設定（文字列またはプラットフォーム別オブジェクト）
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum ShortcutKey {
+    Simple(String),
+    Platform {
+        #[serde(default)]
+        windows: Option<String>,
+        #[serde(default, rename = "macos")]
+        macos: Option<String>,
+    },
+}
+
+impl ShortcutKey {
+    /// プラットフォームに応じたキーを取得
+    pub fn get_key(&self, is_macos: bool) -> Option<String> {
+        match self {
+            Self::Simple(key) => Some(key.clone()),
+            Self::Platform { windows, macos } => {
+                if is_macos {
+                    macos.clone()
+                } else {
+                    windows.clone()
+                }
+            }
+        }
+    }
+}
+
+// ショートカットの構造体（アプリ名はJSONのキーから取得）
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Shortcut {
-    pub id: u32,
-    pub category: String,
+    /// アクション名（表示用）
     pub action: String,
-    pub mac: String,
-    pub windows: String,
+    /// キー設定
+    pub key: ShortcutKey,
+    /// 説明
+    #[serde(default)]
+    pub description: String,
+    /// 検索用タグ（ローマ字含む）
+    #[serde(default)]
+    pub tags: Vec<String>,
+}
+
+// フロントエンドに渡す正規化されたショートカット
+#[derive(Debug, Clone, Serialize)]
+pub struct NormalizedShortcut {
+    pub app: String,
+    pub action: String,
+    pub key: String,
     pub description: String,
     pub tags: Vec<String>,
 }
@@ -109,10 +152,10 @@ impl AppRule {
     }
 }
 
-// ショートカット設定ファイルの構造体
+// ショートカット設定ファイルの構造体（アプリ名 -> ショートカット配列）
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ShortcutsConfig {
-    pub shortcuts: Vec<Shortcut>,
+    pub shortcuts: HashMap<String, Vec<Shortcut>>,
 }
 
 impl Default for ShortcutsConfig {
@@ -137,97 +180,13 @@ impl Default for AppsConfig {
     }
 }
 
-// デフォルトのアプリ設定
+// デフォルトのアプリ設定（JSONファイルから読み込み）
+const DEFAULT_APPS_JSON: &str = include_str!("../defaults/apps.json");
+
 fn get_default_apps() -> Vec<AppRule> {
-    vec![
-        // ブラウザ
-        AppRule::Detailed(AppRuleObject {
-            display: "Chrome".into(),
-            process: Some("chrome".into()),
-            window: Some("Google Chrome".into()),
-            platform: None,
-        }),
-        AppRule::Detailed(AppRuleObject {
-            display: "Edge".into(),
-            process: Some("msedge".into()),
-            window: Some("Microsoft Edge".into()),
-            platform: None,
-        }),
-        AppRule::Detailed(AppRuleObject {
-            display: "Firefox".into(),
-            process: Some("firefox".into()),
-            window: Some("Firefox".into()),
-            platform: None,
-        }),
-        AppRule::Simple("Safari".into()),
-        AppRule::Detailed(AppRuleObject {
-            display: "Brave".into(),
-            process: Some("brave".into()),
-            window: Some("Brave".into()),
-            platform: None,
-        }),
-        // エディタ
-        AppRule::Detailed(AppRuleObject {
-            display: "VS Code".into(),
-            process: Some("Code".into()),
-            window: Some("Visual Studio Code".into()),
-            platform: None,
-        }),
-        AppRule::Detailed(AppRuleObject {
-            display: "Cursor".into(),
-            process: Some("Cursor".into()),
-            window: Some("Cursor".into()),
-            platform: None,
-        }),
-        // ファイルマネージャー
-        AppRule::Detailed(AppRuleObject {
-            display: "エクスプローラー".into(),
-            process: Some("explorer".into()),
-            window: None,
-            platform: None,
-        }),
-        AppRule::Detailed(AppRuleObject {
-            display: "Finder".into(),
-            process: Some("Finder".into()),
-            window: None,
-            platform: None,
-        }),
-        // コミュニケーション
-        AppRule::Simple("Slack".into()),
-        AppRule::Simple("Zoom".into()),
-        // Office
-        AppRule::Detailed(AppRuleObject {
-            display: "Excel".into(),
-            process: Some("EXCEL".into()),
-            window: Some("Excel".into()),
-            platform: None,
-        }),
-        // ターミナル
-        AppRule::Detailed(AppRuleObject {
-            display: "Windows Terminal".into(),
-            process: Some("WindowsTerminal".into()),
-            window: Some("Windows Terminal".into()),
-            platform: None,
-        }),
-        AppRule::Detailed(AppRuleObject {
-            display: "Terminal".into(),
-            process: Some("Terminal".into()),
-            window: None,
-            platform: None,
-        }),
-        AppRule::Detailed(AppRuleObject {
-            display: "PowerShell".into(),
-            process: Some("powershell".into()),
-            window: Some("PowerShell".into()),
-            platform: None,
-        }),
-        AppRule::Detailed(AppRuleObject {
-            display: "コマンドプロンプト".into(),
-            process: Some("cmd".into()),
-            window: Some("コマンド プロンプト".into()),
-            platform: None,
-        }),
-    ]
+    serde_json::from_str::<AppsConfig>(DEFAULT_APPS_JSON)
+        .map(|config| config.apps)
+        .unwrap_or_default()
 }
 
 // 設定ディレクトリのパスを取得
@@ -310,829 +269,13 @@ fn save_apps_config(config: &AppsConfig) -> Result<(), String> {
     Ok(())
 }
 
-// デフォルトのショートカットデータ
-#[allow(clippy::too_many_lines)]
-fn get_default_shortcuts() -> Vec<Shortcut> {
-    vec![
-        // 一般的なショートカット
-        Shortcut {
-            id: 1,
-            category: "一般".into(),
-            action: "コピー".into(),
-            mac: "⌘ + C".into(),
-            windows: "Ctrl + C".into(),
-            description: "選択したテキストやファイルをクリップボードにコピー".into(),
-            tags: vec!["コピー".into(), "copy".into(), "クリップボード".into()],
-        },
-        Shortcut {
-            id: 2,
-            category: "一般".into(),
-            action: "ペースト（貼り付け）".into(),
-            mac: "⌘ + V".into(),
-            windows: "Ctrl + V".into(),
-            description: "クリップボードの内容を貼り付け".into(),
-            tags: vec![
-                "ペースト".into(),
-                "貼り付け".into(),
-                "paste".into(),
-                "クリップボード".into(),
-            ],
-        },
-        Shortcut {
-            id: 3,
-            category: "一般".into(),
-            action: "切り取り".into(),
-            mac: "⌘ + X".into(),
-            windows: "Ctrl + X".into(),
-            description: "選択したテキストやファイルを切り取り".into(),
-            tags: vec!["切り取り".into(), "cut".into(), "カット".into()],
-        },
-        Shortcut {
-            id: 4,
-            category: "一般".into(),
-            action: "元に戻す".into(),
-            mac: "⌘ + Z".into(),
-            windows: "Ctrl + Z".into(),
-            description: "直前の操作を取り消し".into(),
-            tags: vec![
-                "元に戻す".into(),
-                "undo".into(),
-                "取り消し".into(),
-                "アンドゥ".into(),
-            ],
-        },
-        Shortcut {
-            id: 5,
-            category: "一般".into(),
-            action: "やり直し".into(),
-            mac: "⌘ + Shift + Z".into(),
-            windows: "Ctrl + Y".into(),
-            description: "元に戻した操作をやり直し".into(),
-            tags: vec!["やり直し".into(), "redo".into(), "リドゥ".into()],
-        },
-        Shortcut {
-            id: 6,
-            category: "一般".into(),
-            action: "すべて選択".into(),
-            mac: "⌘ + A".into(),
-            windows: "Ctrl + A".into(),
-            description: "すべての項目を選択".into(),
-            tags: vec!["すべて選択".into(), "全選択".into(), "select all".into()],
-        },
-        Shortcut {
-            id: 7,
-            category: "一般".into(),
-            action: "検索".into(),
-            mac: "⌘ + F".into(),
-            windows: "Ctrl + F".into(),
-            description: "ページ内検索を開く".into(),
-            tags: vec!["検索".into(), "find".into(), "search".into(), "探す".into()],
-        },
-        Shortcut {
-            id: 8,
-            category: "一般".into(),
-            action: "保存".into(),
-            mac: "⌘ + S".into(),
-            windows: "Ctrl + S".into(),
-            description: "現在のドキュメントを保存".into(),
-            tags: vec!["保存".into(), "save".into(), "セーブ".into()],
-        },
-        Shortcut {
-            id: 9,
-            category: "一般".into(),
-            action: "印刷".into(),
-            mac: "⌘ + P".into(),
-            windows: "Ctrl + P".into(),
-            description: "印刷ダイアログを開く".into(),
-            tags: vec!["印刷".into(), "print".into(), "プリント".into()],
-        },
-        Shortcut {
-            id: 10,
-            category: "一般".into(),
-            action: "新規作成".into(),
-            mac: "⌘ + N".into(),
-            windows: "Ctrl + N".into(),
-            description: "新しいドキュメントやウィンドウを作成".into(),
-            tags: vec!["新規".into(), "new".into(), "作成".into()],
-        },
-        Shortcut {
-            id: 11,
-            category: "一般".into(),
-            action: "開く".into(),
-            mac: "⌘ + O".into(),
-            windows: "Ctrl + O".into(),
-            description: "ファイルを開くダイアログを表示".into(),
-            tags: vec!["開く".into(), "open".into(), "ファイル".into()],
-        },
-        Shortcut {
-            id: 12,
-            category: "一般".into(),
-            action: "閉じる".into(),
-            mac: "⌘ + W".into(),
-            windows: "Ctrl + W".into(),
-            description: "現在のウィンドウやタブを閉じる".into(),
-            tags: vec!["閉じる".into(), "close".into(), "クローズ".into()],
-        },
-        Shortcut {
-            id: 13,
-            category: "一般".into(),
-            action: "終了".into(),
-            mac: "⌘ + Q".into(),
-            windows: "Alt + F4".into(),
-            description: "アプリケーションを終了".into(),
-            tags: vec!["終了".into(), "quit".into(), "exit".into(), "閉じる".into()],
-        },
-        // テキスト編集
-        Shortcut {
-            id: 14,
-            category: "テキスト編集".into(),
-            action: "太字".into(),
-            mac: "⌘ + B".into(),
-            windows: "Ctrl + B".into(),
-            description: "選択したテキストを太字に".into(),
-            tags: vec!["太字".into(), "bold".into(), "ボールド".into()],
-        },
-        Shortcut {
-            id: 15,
-            category: "テキスト編集".into(),
-            action: "斜体".into(),
-            mac: "⌘ + I".into(),
-            windows: "Ctrl + I".into(),
-            description: "選択したテキストを斜体に".into(),
-            tags: vec!["斜体".into(), "italic".into(), "イタリック".into()],
-        },
-        Shortcut {
-            id: 16,
-            category: "テキスト編集".into(),
-            action: "下線".into(),
-            mac: "⌘ + U".into(),
-            windows: "Ctrl + U".into(),
-            description: "選択したテキストに下線を追加".into(),
-            tags: vec!["下線".into(), "underline".into(), "アンダーライン".into()],
-        },
-        Shortcut {
-            id: 17,
-            category: "テキスト編集".into(),
-            action: "行の先頭へ移動".into(),
-            mac: "⌘ + ←".into(),
-            windows: "Home".into(),
-            description: "カーソルを行の先頭に移動".into(),
-            tags: vec!["行頭".into(), "先頭".into(), "home".into(), "移動".into()],
-        },
-        Shortcut {
-            id: 18,
-            category: "テキスト編集".into(),
-            action: "行の末尾へ移動".into(),
-            mac: "⌘ + →".into(),
-            windows: "End".into(),
-            description: "カーソルを行の末尾に移動".into(),
-            tags: vec!["行末".into(), "末尾".into(), "end".into(), "移動".into()],
-        },
-        // ブラウザ
-        Shortcut {
-            id: 23,
-            category: "ブラウザ".into(),
-            action: "新しいタブ".into(),
-            mac: "⌘ + T".into(),
-            windows: "Ctrl + T".into(),
-            description: "新しいタブを開く".into(),
-            tags: vec![
-                "タブ".into(),
-                "tab".into(),
-                "新規".into(),
-                "ブラウザ".into(),
-            ],
-        },
-        Shortcut {
-            id: 24,
-            category: "ブラウザ".into(),
-            action: "タブを閉じる".into(),
-            mac: "⌘ + W".into(),
-            windows: "Ctrl + W".into(),
-            description: "現在のタブを閉じる".into(),
-            tags: vec![
-                "タブ".into(),
-                "tab".into(),
-                "閉じる".into(),
-                "ブラウザ".into(),
-            ],
-        },
-        Shortcut {
-            id: 25,
-            category: "ブラウザ".into(),
-            action: "閉じたタブを復元".into(),
-            mac: "⌘ + Shift + T".into(),
-            windows: "Ctrl + Shift + T".into(),
-            description: "最後に閉じたタブを再度開く".into(),
-            tags: vec![
-                "タブ".into(),
-                "復元".into(),
-                "reopen".into(),
-                "ブラウザ".into(),
-            ],
-        },
-        Shortcut {
-            id: 28,
-            category: "ブラウザ".into(),
-            action: "ページを再読み込み".into(),
-            mac: "⌘ + R".into(),
-            windows: "Ctrl + R / F5".into(),
-            description: "現在のページを再読み込み".into(),
-            tags: vec![
-                "リロード".into(),
-                "reload".into(),
-                "更新".into(),
-                "refresh".into(),
-                "ブラウザ".into(),
-            ],
-        },
-        Shortcut {
-            id: 30,
-            category: "ブラウザ".into(),
-            action: "アドレスバーにフォーカス".into(),
-            mac: "⌘ + L".into(),
-            windows: "Ctrl + L / F6".into(),
-            description: "アドレスバーを選択".into(),
-            tags: vec![
-                "アドレス".into(),
-                "URL".into(),
-                "ブラウザ".into(),
-                "フォーカス".into(),
-            ],
-        },
-        Shortcut {
-            id: 32,
-            category: "ブラウザ".into(),
-            action: "開発者ツール".into(),
-            mac: "⌘ + Option + I".into(),
-            windows: "F12 / Ctrl + Shift + I".into(),
-            description: "開発者ツールを開く".into(),
-            tags: vec![
-                "開発者ツール".into(),
-                "devtools".into(),
-                "inspect".into(),
-                "デバッグ".into(),
-                "ブラウザ".into(),
-            ],
-        },
-        // システム（Mac）
-        Shortcut {
-            id: 38,
-            category: "システム（Mac）".into(),
-            action: "Spotlight検索".into(),
-            mac: "⌘ + Space".into(),
-            windows: "-".into(),
-            description: "Spotlight検索を開く".into(),
-            tags: vec![
-                "spotlight".into(),
-                "検索".into(),
-                "search".into(),
-                "mac".into(),
-            ],
-        },
-        Shortcut {
-            id: 39,
-            category: "システム（Mac）".into(),
-            action: "スクリーンショット（全画面）".into(),
-            mac: "⌘ + Shift + 3".into(),
-            windows: "Print Screen".into(),
-            description: "画面全体のスクリーンショットを撮影".into(),
-            tags: vec![
-                "スクリーンショット".into(),
-                "screenshot".into(),
-                "画面キャプチャ".into(),
-            ],
-        },
-        Shortcut {
-            id: 40,
-            category: "システム（Mac）".into(),
-            action: "スクリーンショット（範囲選択）".into(),
-            mac: "⌘ + Shift + 4".into(),
-            windows: "Win + Shift + S".into(),
-            description: "選択範囲のスクリーンショットを撮影".into(),
-            tags: vec![
-                "スクリーンショット".into(),
-                "screenshot".into(),
-                "画面キャプチャ".into(),
-                "範囲".into(),
-            ],
-        },
-        Shortcut {
-            id: 44,
-            category: "システム（Mac）".into(),
-            action: "アプリの切り替え".into(),
-            mac: "⌘ + Tab".into(),
-            windows: "Alt + Tab".into(),
-            description: "開いているアプリを切り替え".into(),
-            tags: vec![
-                "切り替え".into(),
-                "switch".into(),
-                "アプリ".into(),
-                "tab".into(),
-            ],
-        },
-        // システム（Windows）
-        Shortcut {
-            id: 50,
-            category: "システム（Windows）".into(),
-            action: "スタートメニュー".into(),
-            mac: "-".into(),
-            windows: "Win".into(),
-            description: "スタートメニューを開く".into(),
-            tags: vec![
-                "スタート".into(),
-                "start".into(),
-                "メニュー".into(),
-                "windows".into(),
-            ],
-        },
-        Shortcut {
-            id: 52,
-            category: "システム（Windows）".into(),
-            action: "エクスプローラーを開く".into(),
-            mac: "-".into(),
-            windows: "Win + E".into(),
-            description: "ファイルエクスプローラーを開く".into(),
-            tags: vec![
-                "エクスプローラー".into(),
-                "explorer".into(),
-                "ファイル".into(),
-                "windows".into(),
-            ],
-        },
-        Shortcut {
-            id: 55,
-            category: "システム（Windows）".into(),
-            action: "タスクビュー".into(),
-            mac: "-".into(),
-            windows: "Win + Tab".into(),
-            description: "タスクビューを開く".into(),
-            tags: vec![
-                "タスクビュー".into(),
-                "task view".into(),
-                "ウィンドウ".into(),
-                "windows".into(),
-            ],
-        },
-        // VS Code
-        Shortcut {
-            id: 61,
-            category: "VS Code".into(),
-            action: "コマンドパレット".into(),
-            mac: "⌘ + Shift + P".into(),
-            windows: "Ctrl + Shift + P".into(),
-            description: "コマンドパレットを開く".into(),
-            tags: vec![
-                "コマンド".into(),
-                "command".into(),
-                "palette".into(),
-                "vscode".into(),
-            ],
-        },
-        Shortcut {
-            id: 62,
-            category: "VS Code".into(),
-            action: "クイックオープン".into(),
-            mac: "⌘ + P".into(),
-            windows: "Ctrl + P".into(),
-            description: "ファイルをすばやく開く".into(),
-            tags: vec![
-                "ファイル".into(),
-                "開く".into(),
-                "quick open".into(),
-                "vscode".into(),
-            ],
-        },
-        Shortcut {
-            id: 66,
-            category: "VS Code".into(),
-            action: "行を削除".into(),
-            mac: "⌘ + Shift + K".into(),
-            windows: "Ctrl + Shift + K".into(),
-            description: "現在の行を削除".into(),
-            tags: vec!["削除".into(), "行".into(), "delete".into(), "vscode".into()],
-        },
-        Shortcut {
-            id: 69,
-            category: "VS Code".into(),
-            action: "行コメント切り替え".into(),
-            mac: "⌘ + /".into(),
-            windows: "Ctrl + /".into(),
-            description: "行コメントの切り替え".into(),
-            tags: vec!["コメント".into(), "comment".into(), "vscode".into()],
-        },
-        Shortcut {
-            id: 71,
-            category: "VS Code".into(),
-            action: "定義に移動".into(),
-            mac: "F12".into(),
-            windows: "F12".into(),
-            description: "シンボルの定義に移動".into(),
-            tags: vec![
-                "定義".into(),
-                "definition".into(),
-                "ジャンプ".into(),
-                "vscode".into(),
-            ],
-        },
-        Shortcut {
-            id: 67,
-            category: "VS Code".into(),
-            action: "マルチカーソル".into(),
-            mac: "⌘ + Option + ↑/↓".into(),
-            windows: "Ctrl + Alt + ↑/↓".into(),
-            description: "複数行にカーソルを追加".into(),
-            tags: vec![
-                "マルチカーソル".into(),
-                "multi cursor".into(),
-                "vscode".into(),
-            ],
-        },
-        Shortcut {
-            id: 68,
-            category: "VS Code".into(),
-            action: "同じ単語を選択".into(),
-            mac: "⌘ + D".into(),
-            windows: "Ctrl + D".into(),
-            description: "同じ単語の次の出現を選択に追加".into(),
-            tags: vec![
-                "選択".into(),
-                "単語".into(),
-                "マルチ".into(),
-                "vscode".into(),
-            ],
-        },
-        Shortcut {
-            id: 74,
-            category: "VS Code".into(),
-            action: "サイドバー表示切り替え".into(),
-            mac: "⌘ + B".into(),
-            windows: "Ctrl + B".into(),
-            description: "サイドバーの表示/非表示を切り替え".into(),
-            tags: vec!["サイドバー".into(), "sidebar".into(), "vscode".into()],
-        },
-        Shortcut {
-            id: 75,
-            category: "VS Code".into(),
-            action: "ターミナル表示切り替え".into(),
-            mac: "⌘ + `".into(),
-            windows: "Ctrl + `".into(),
-            description: "統合ターミナルの表示/非表示を切り替え".into(),
-            tags: vec!["ターミナル".into(), "terminal".into(), "vscode".into()],
-        },
-        // ブラウザ追加
-        Shortcut {
-            id: 26,
-            category: "ブラウザ".into(),
-            action: "次のタブ".into(),
-            mac: "⌘ + Option + →".into(),
-            windows: "Ctrl + Tab".into(),
-            description: "次のタブに移動".into(),
-            tags: vec![
-                "タブ".into(),
-                "tab".into(),
-                "次".into(),
-                "移動".into(),
-                "ブラウザ".into(),
-            ],
-        },
-        Shortcut {
-            id: 27,
-            category: "ブラウザ".into(),
-            action: "前のタブ".into(),
-            mac: "⌘ + Option + ←".into(),
-            windows: "Ctrl + Shift + Tab".into(),
-            description: "前のタブに移動".into(),
-            tags: vec![
-                "タブ".into(),
-                "tab".into(),
-                "前".into(),
-                "移動".into(),
-                "ブラウザ".into(),
-            ],
-        },
-        Shortcut {
-            id: 31,
-            category: "ブラウザ".into(),
-            action: "ブックマーク追加".into(),
-            mac: "⌘ + D".into(),
-            windows: "Ctrl + D".into(),
-            description: "現在のページをブックマークに追加".into(),
-            tags: vec![
-                "ブックマーク".into(),
-                "bookmark".into(),
-                "お気に入り".into(),
-                "ブラウザ".into(),
-            ],
-        },
-        Shortcut {
-            id: 33,
-            category: "ブラウザ".into(),
-            action: "戻る".into(),
-            mac: "⌘ + [".into(),
-            windows: "Alt + ←".into(),
-            description: "前のページに戻る".into(),
-            tags: vec![
-                "戻る".into(),
-                "back".into(),
-                "ブラウザ".into(),
-                "ナビゲーション".into(),
-            ],
-        },
-        Shortcut {
-            id: 34,
-            category: "ブラウザ".into(),
-            action: "進む".into(),
-            mac: "⌘ + ]".into(),
-            windows: "Alt + →".into(),
-            description: "次のページに進む".into(),
-            tags: vec![
-                "進む".into(),
-                "forward".into(),
-                "ブラウザ".into(),
-                "ナビゲーション".into(),
-            ],
-        },
-        Shortcut {
-            id: 37,
-            category: "ブラウザ".into(),
-            action: "シークレットウィンドウ".into(),
-            mac: "⌘ + Shift + N".into(),
-            windows: "Ctrl + Shift + N".into(),
-            description: "新しいシークレット/プライベートウィンドウを開く".into(),
-            tags: vec![
-                "シークレット".into(),
-                "プライベート".into(),
-                "incognito".into(),
-                "ブラウザ".into(),
-            ],
-        },
-        // システム（Windows）追加
-        Shortcut {
-            id: 51,
-            category: "システム（Windows）".into(),
-            action: "設定を開く".into(),
-            mac: "-".into(),
-            windows: "Win + I".into(),
-            description: "Windowsの設定を開く".into(),
-            tags: vec!["設定".into(), "settings".into(), "windows".into()],
-        },
-        Shortcut {
-            id: 56,
-            category: "システム（Windows）".into(),
-            action: "ウィンドウを左半分にスナップ".into(),
-            mac: "-".into(),
-            windows: "Win + ←".into(),
-            description: "ウィンドウを画面の左半分にスナップ".into(),
-            tags: vec![
-                "スナップ".into(),
-                "snap".into(),
-                "ウィンドウ".into(),
-                "左".into(),
-            ],
-        },
-        Shortcut {
-            id: 57,
-            category: "システム（Windows）".into(),
-            action: "ウィンドウを右半分にスナップ".into(),
-            mac: "-".into(),
-            windows: "Win + →".into(),
-            description: "ウィンドウを画面の右半分にスナップ".into(),
-            tags: vec![
-                "スナップ".into(),
-                "snap".into(),
-                "ウィンドウ".into(),
-                "右".into(),
-            ],
-        },
-        Shortcut {
-            id: 60,
-            category: "システム（Windows）".into(),
-            action: "クリップボード履歴".into(),
-            mac: "-".into(),
-            windows: "Win + V".into(),
-            description: "クリップボード履歴を表示".into(),
-            tags: vec![
-                "クリップボード".into(),
-                "clipboard".into(),
-                "履歴".into(),
-                "windows".into(),
-            ],
-        },
-        // Finder / エクスプローラー
-        Shortcut {
-            id: 77,
-            category: "Finder / エクスプローラー".into(),
-            action: "新しいフォルダ".into(),
-            mac: "⌘ + Shift + N".into(),
-            windows: "Ctrl + Shift + N".into(),
-            description: "新しいフォルダを作成".into(),
-            tags: vec![
-                "フォルダ".into(),
-                "folder".into(),
-                "新規".into(),
-                "作成".into(),
-            ],
-        },
-        Shortcut {
-            id: 78,
-            category: "Finder / エクスプローラー".into(),
-            action: "ファイル名を変更".into(),
-            mac: "Enter".into(),
-            windows: "F2".into(),
-            description: "選択したファイルの名前を変更".into(),
-            tags: vec!["名前変更".into(), "rename".into(), "ファイル".into()],
-        },
-        Shortcut {
-            id: 79,
-            category: "Finder / エクスプローラー".into(),
-            action: "ゴミ箱に移動".into(),
-            mac: "⌘ + Delete".into(),
-            windows: "Delete".into(),
-            description: "選択したファイルをゴミ箱に移動".into(),
-            tags: vec!["削除".into(), "delete".into(), "ゴミ箱".into()],
-        },
-        // Slack
-        Shortcut {
-            id: 84,
-            category: "Slack".into(),
-            action: "クイックスイッチャー".into(),
-            mac: "⌘ + K".into(),
-            windows: "Ctrl + K".into(),
-            description: "チャンネルやDMをすばやく切り替え".into(),
-            tags: vec![
-                "slack".into(),
-                "切り替え".into(),
-                "チャンネル".into(),
-                "検索".into(),
-            ],
-        },
-        Shortcut {
-            id: 87,
-            category: "Slack".into(),
-            action: "未読に移動".into(),
-            mac: "⌘ + Shift + A".into(),
-            windows: "Ctrl + Shift + A".into(),
-            description: "未読メッセージに移動".into(),
-            tags: vec!["slack".into(), "未読".into(), "メッセージ".into()],
-        },
-        // Excel / スプレッドシート
-        Shortcut {
-            id: 88,
-            category: "Excel / スプレッドシート".into(),
-            action: "セルの編集".into(),
-            mac: "F2".into(),
-            windows: "F2".into(),
-            description: "選択したセルを編集モードに".into(),
-            tags: vec!["excel".into(), "編集".into(), "セル".into()],
-        },
-        Shortcut {
-            id: 92,
-            category: "Excel / スプレッドシート".into(),
-            action: "値のみ貼り付け".into(),
-            mac: "⌘ + Shift + V".into(),
-            windows: "Ctrl + Shift + V".into(),
-            description: "書式なしで値のみ貼り付け".into(),
-            tags: vec![
-                "excel".into(),
-                "貼り付け".into(),
-                "値".into(),
-                "ペースト".into(),
-            ],
-        },
-        // ターミナル
-        Shortcut {
-            id: 95,
-            category: "ターミナル".into(),
-            action: "コマンドを中断".into(),
-            mac: "Control + C".into(),
-            windows: "Ctrl + C".into(),
-            description: "実行中のコマンドを中断".into(),
-            tags: vec![
-                "ターミナル".into(),
-                "terminal".into(),
-                "中断".into(),
-                "キャンセル".into(),
-            ],
-        },
-        Shortcut {
-            id: 96,
-            category: "ターミナル".into(),
-            action: "画面をクリア".into(),
-            mac: "⌘ + K / Control + L".into(),
-            windows: "cls / Ctrl + L".into(),
-            description: "ターミナル画面をクリア".into(),
-            tags: vec![
-                "ターミナル".into(),
-                "terminal".into(),
-                "クリア".into(),
-                "clear".into(),
-            ],
-        },
-        // Zoom
-        Shortcut {
-            id: 100,
-            category: "Zoom".into(),
-            action: "ミュート切り替え".into(),
-            mac: "⌘ + Shift + A".into(),
-            windows: "Alt + A".into(),
-            description: "マイクのミュート/ミュート解除".into(),
-            tags: vec![
-                "zoom".into(),
-                "ミュート".into(),
-                "mute".into(),
-                "マイク".into(),
-            ],
-        },
-        Shortcut {
-            id: 101,
-            category: "Zoom".into(),
-            action: "ビデオ切り替え".into(),
-            mac: "⌘ + Shift + V".into(),
-            windows: "Alt + V".into(),
-            description: "ビデオのオン/オフを切り替え".into(),
-            tags: vec![
-                "zoom".into(),
-                "ビデオ".into(),
-                "video".into(),
-                "カメラ".into(),
-            ],
-        },
-        Shortcut {
-            id: 102,
-            category: "Zoom".into(),
-            action: "画面共有".into(),
-            mac: "⌘ + Shift + S".into(),
-            windows: "Alt + S".into(),
-            description: "画面共有を開始/停止".into(),
-            tags: vec![
-                "zoom".into(),
-                "画面共有".into(),
-                "share".into(),
-                "screen".into(),
-            ],
-        },
-        // テキスト編集追加
-        Shortcut {
-            id: 19,
-            category: "テキスト編集".into(),
-            action: "単語単位で移動（左）".into(),
-            mac: "Option + ←".into(),
-            windows: "Ctrl + ←".into(),
-            description: "カーソルを単語単位で左に移動".into(),
-            tags: vec!["単語".into(), "word".into(), "移動".into(), "左".into()],
-        },
-        Shortcut {
-            id: 20,
-            category: "テキスト編集".into(),
-            action: "単語単位で移動（右）".into(),
-            mac: "Option + →".into(),
-            windows: "Ctrl + →".into(),
-            description: "カーソルを単語単位で右に移動".into(),
-            tags: vec!["単語".into(), "word".into(), "移動".into(), "右".into()],
-        },
-        // システム（Mac）追加
-        Shortcut {
-            id: 43,
-            category: "システム（Mac）".into(),
-            action: "デスクトップを表示".into(),
-            mac: "F11 / ⌘ + F3".into(),
-            windows: "Win + D".into(),
-            description: "デスクトップを表示".into(),
-            tags: vec!["デスクトップ".into(), "desktop".into(), "表示".into()],
-        },
-        Shortcut {
-            id: 46,
-            category: "システム（Mac）".into(),
-            action: "強制終了ダイアログ".into(),
-            mac: "⌘ + Option + Esc".into(),
-            windows: "Ctrl + Shift + Esc".into(),
-            description: "アプリケーションの強制終了ダイアログを開く".into(),
-            tags: vec![
-                "強制終了".into(),
-                "force quit".into(),
-                "タスクマネージャー".into(),
-            ],
-        },
-        Shortcut {
-            id: 47,
-            category: "システム（Mac）".into(),
-            action: "画面ロック".into(),
-            mac: "⌘ + Control + Q".into(),
-            windows: "Win + L".into(),
-            description: "画面をロック".into(),
-            tags: vec!["ロック".into(), "lock".into(), "画面".into()],
-        },
-        Shortcut {
-            id: 49,
-            category: "システム（Mac）".into(),
-            action: "絵文字ピッカー".into(),
-            mac: "⌘ + Control + Space".into(),
-            windows: "Win + .".into(),
-            description: "絵文字入力パネルを開く".into(),
-            tags: vec!["絵文字".into(), "emoji".into(), "顔文字".into()],
-        },
-    ]
+// デフォルトのショートカットデータ（JSONファイルから読み込み）
+const DEFAULT_SHORTCUTS_JSON: &str = include_str!("../defaults/shortcuts.json");
+
+fn get_default_shortcuts() -> HashMap<String, Vec<Shortcut>> {
+    serde_json::from_str::<ShortcutsConfig>(DEFAULT_SHORTCUTS_JSON)
+        .map(|config| config.shortcuts)
+        .unwrap_or_default()
 }
 
 // アクティブウィンドウ情報
@@ -1386,10 +529,33 @@ fn get_matched_apps(info: Option<ActiveWindowInfo>) -> Vec<NormalizedAppRule> {
     }
 }
 
-// ショートカット一覧を取得するコマンド
+// ショートカット一覧を取得するコマンド（プラットフォームに応じて正規化）
 #[tauri::command]
-fn get_shortcuts() -> Vec<Shortcut> {
-    load_shortcuts_config().shortcuts
+fn get_shortcuts() -> Vec<NormalizedShortcut> {
+    let is_macos = cfg!(target_os = "macos");
+    let config = load_shortcuts_config();
+
+    config
+        .shortcuts
+        .into_iter()
+        .flat_map(|(app_name, shortcuts)| {
+            shortcuts.into_iter().filter_map(move |shortcut| {
+                // プラットフォームに応じたキーを取得
+                let key = shortcut.key.get_key(is_macos)?;
+                // キーが"-"の場合は対象外
+                if key == "-" {
+                    return None;
+                }
+                Some(NormalizedShortcut {
+                    app: app_name.clone(),
+                    action: shortcut.action,
+                    key,
+                    description: shortcut.description,
+                    tags: shortcut.tags,
+                })
+            })
+        })
+        .collect()
 }
 
 // 設定ファイルのパスを取得するコマンド
@@ -1400,7 +566,7 @@ fn get_config_file_path() -> Option<String> {
 
 // ショートカットを保存するコマンド
 #[tauri::command]
-fn save_shortcuts(shortcuts: Vec<Shortcut>) -> Result<(), String> {
+fn save_shortcuts(shortcuts: HashMap<String, Vec<Shortcut>>) -> Result<(), String> {
     let config = ShortcutsConfig { shortcuts };
     save_shortcuts_config(&config)
 }

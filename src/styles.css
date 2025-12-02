@@ -41,7 +41,7 @@ body {
   border-radius: var(--radius);
   border: 1px solid var(--border-color);
   overflow: hidden;
-  box-shadow: 
+  box-shadow:
     0 24px 80px rgba(0, 0, 0, 0.45),
     0 0 1px rgba(255, 255, 255, 0.1) inset;
 }
@@ -84,90 +84,6 @@ body {
   white-space: nowrap;
 }
 
-/* キー入力コンテナ */
-.key-input-container {
-  display: flex;
-  align-items: center;
-  padding: 14px 18px;
-  border-bottom: 1px solid var(--border-color);
-  background: rgba(255, 255, 255, 0.02);
-  -webkit-app-region: drag;
-}
-
-.key-input-container button {
-  -webkit-app-region: no-drag;
-}
-
-.key-input-label {
-  color: var(--text-secondary);
-  font-size: 12px;
-  margin-right: 12px;
-  flex-shrink: 0;
-}
-
-.key-input-display {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 32px;
-  flex-wrap: wrap;
-}
-
-.key-placeholder {
-  color: var(--text-muted);
-  font-size: 14px;
-}
-
-.pressed-key {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 32px;
-  padding: 6px 12px;
-  background: linear-gradient(135deg, var(--accent-color), #0066cc);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 6px;
-  font-size: 13px;
-  font-weight: 600;
-  color: #fff;
-  font-family: 'SF Mono', 'Monaco', 'Menlo', 'Consolas', monospace;
-  box-shadow: 0 2px 8px rgba(10, 132, 255, 0.3);
-  animation: keyPress 0.15s ease;
-}
-
-@keyframes keyPress {
-  0% {
-    transform: scale(0.8);
-    opacity: 0;
-  }
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-
-.mode-toggle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border: none;
-  background: var(--bg-secondary);
-  color: var(--text-secondary);
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  margin-left: 12px;
-  flex-shrink: 0;
-}
-
-.mode-toggle:hover {
-  background: var(--bg-hover);
-  color: var(--text-primary);
-}
-
 /* 検索コンテナ */
 .search-container {
   display: flex;
@@ -199,7 +115,6 @@ body {
   color: var(--text-muted);
   font-weight: 400;
 }
-
 
 /* 結果コンテナ */
 .results-container {
@@ -235,6 +150,7 @@ body {
   cursor: pointer;
   transition: background 0.1s ease;
   margin-bottom: 2px;
+  will-change: background;
 }
 
 .result-item:hover {
@@ -446,23 +362,4 @@ body {
   background: rgba(10, 132, 255, 0.3);
   border-radius: 2px;
   padding: 0 2px;
-}
-
-.key-highlight {
-  background: rgba(10, 132, 255, 0.4);
-  border-radius: 2px;
-  padding: 0 2px;
-  color: #fff;
-  font-weight: 600;
-}
-
-.key-separator {
-  color: var(--text-muted);
-  margin: 0 2px;
-  font-size: 12px;
-}
-
-/* アニメーション（軽量化） */
-.result-item {
-  will-change: background;
 }

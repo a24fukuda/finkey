@@ -1,0 +1,77 @@
+{
+  "apps": [
+    {
+      "display": "Chrome",
+      "process": "chrome",
+      "window": "Google Chrome"
+    },
+    {
+      "display": "Edge",
+      "process": "msedge",
+      "window": "Microsoft Edge"
+    },
+    {
+      "display": "Firefox",
+      "process": "firefox",
+      "window": "Firefox"
+    },
+    "Safari",
+    {
+      "display": "Brave",
+      "process": "brave",
+      "window": "Brave"
+    },
+    {
+      "display": "VS Code",
+      "process": "Code",
+      "window": "Visual Studio Code"
+    },
+    {
+      "display": "Cursor",
+      "platform": {
+        "windows": {
+          "process": "Cursor",
+          "window": "Cursor"
+        },
+        "macos": {
+          "process": "Cursor",
+          "window": "Cursor"
+        }
+      }
+    },
+    {
+      "display": "エクスプローラー",
+      "process": "explorer"
+    },
+    {
+      "display": "Finder",
+      "process": "Finder"
+    },
+    "Slack",
+    "Zoom",
+    {
+      "display": "Excel",
+      "process": "EXCEL",
+      "window": "Excel"
+    },
+    {
+      "display": "Windows Terminal",
+      "process": "WindowsTerminal",
+      "window": "Windows Terminal"
+    },
+    {
+      "display": "Terminal",
+      "process": "Terminal"
+    },
+    {
+      "display": "PowerShell",
+      "process": "powershell",
+      "window": "PowerShell"
+    },
+    {
+      "display": "コマンドプロンプト",
+      "process": "cmd",
+      "window": "コマンド プロンプト"
+    }
+  ]
+}

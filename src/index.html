@@ -8,26 +8,8 @@
 </head>
 <body>
   <div id="app">
-    <!-- キー入力表示エリア -->
-    <div class="key-input-container" id="key-input-container">
-      <div class="key-input-label">押しているキー:</div>
-      <div class="key-input-display" id="key-input-display">
-        <span class="key-placeholder">キーを押してください...</span>
-      </div>
-      <div class="detected-app" id="detected-app">
-        <span class="detected-app-label">検出:</span>
-        <span class="detected-app-name" id="active-app-name">-</span>
-      </div>
-      <button class="mode-toggle" id="mode-toggle" title="テキスト検索に切り替え">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-        </svg>
-      </button>
-    </div>
-
-    <!-- 検索バー（テキスト検索モード用） -->
-    <div class="search-container" id="search-container" style="display: none;">
+    <!-- 検索バー -->
+    <div class="search-container" id="search-container">
       <div class="search-icon">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="11" cy="11" r="8"></circle>
@@ -40,18 +22,11 @@
         placeholder="ショートカットを検索... (例: コピー, save, タブ)"
         autocomplete="off"
       >
-      <div class="detected-app" id="detected-app-text">
+      <div class="detected-app" id="detected-app">
         <span class="detected-app-label">検出:</span>
-        <span class="detected-app-name" id="active-app-name-text">-</span>
+        <span class="detected-app-name" id="active-app-name">-</span>
       </div>
-      <button class="mode-toggle" id="mode-toggle-text" title="キー入力検索に切り替え">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect>
-          <path d="M6 8h.001M10 8h.001M14 8h.001M18 8h.001M8 12h.001M12 12h.001M16 12h.001M7 16h10"></path>
-        </svg>
-      </button>
     </div>
-
 
     <!-- 検索結果 -->
     <div class="results-container" id="results-container">

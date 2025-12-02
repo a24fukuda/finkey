@@ -1,0 +1,117 @@
+{
+  "shortcuts": {
+    "VS Code": [
+      {
+        "action": "コマンドパレット",
+        "key": {
+          "windows": "Ctrl + Shift + P",
+          "macos": "⌘ + Shift + P"
+        },
+        "description": "コマンドパレットを開く",
+        "tags": ["コマンド", "command", "palette", "komando"]
+      },
+      {
+        "action": "クイックオープン",
+        "key": {
+          "windows": "Ctrl + P",
+          "macos": "⌘ + P"
+        },
+        "description": "ファイルをすばやく開く",
+        "tags": ["ファイル", "開く", "quick open", "kuikku"]
+      },
+      {
+        "action": "行を削除",
+        "key": {
+          "windows": "Ctrl + Shift + K",
+          "macos": "⌘ + Shift + K"
+        },
+        "description": "現在の行を削除",
+        "tags": ["削除", "行", "delete", "sakujo"]
+      },
+      {
+        "action": "行コメント切り替え",
+        "key": {
+          "windows": "Ctrl + /",
+          "macos": "⌘ + /"
+        },
+        "description": "行コメントの切り替え",
+        "tags": ["コメント", "comment", "komento"]
+      },
+      {
+        "action": "定義に移動",
+        "key": "F12",
+        "description": "シンボルの定義に移動",
+        "tags": ["定義", "definition", "ジャンプ", "teigi"]
+      },
+      {
+        "action": "サイドバー表示切り替え",
+        "key": {
+          "windows": "Ctrl + B",
+          "macos": "⌘ + B"
+        },
+        "description": "サイドバーの表示/非表示を切り替え",
+        "tags": ["サイドバー", "sidebar", "saidobaa"]
+      }
+    ],
+    "Chrome": [
+      {
+        "action": "新しいタブ",
+        "key": {
+          "windows": "Ctrl + T",
+          "macos": "⌘ + T"
+        },
+        "description": "新しいタブを開く",
+        "tags": ["タブ", "tab", "新規", "ブラウザ", "tabu"]
+      },
+      {
+        "action": "閉じたタブを復元",
+        "key": {
+          "windows": "Ctrl + Shift + T",
+          "macos": "⌘ + Shift + T"
+        },
+        "description": "最後に閉じたタブを再度開く",
+        "tags": ["タブ", "復元", "reopen", "ブラウザ", "fukugen"]
+      },
+      {
+        "action": "開発者ツール",
+        "key": {
+          "windows": "F12",
+          "macos": "⌘ + Option + I"
+        },
+        "description": "開発者ツールを開く",
+        "tags": ["開発者ツール", "devtools", "inspect", "デバッグ", "kaihatsu"]
+      }
+    ],
+    "Slack": [
+      {
+        "action": "クイックスイッチャー",
+        "key": {
+          "windows": "Ctrl + K",
+          "macos": "⌘ + K"
+        },
+        "description": "チャンネルやDMをすばやく切り替え",
+        "tags": ["切り替え", "チャンネル", "検索", "kirikae"]
+      }
+    ],
+    "Zoom": [
+      {
+        "action": "ミュート切り替え",
+        "key": {
+          "windows": "Alt + A",
+          "macos": "⌘ + Shift + A"
+        },
+        "description": "マイクのミュート/ミュート解除",
+        "tags": ["ミュート", "mute", "マイク", "myuuto"]
+      },
+      {
+        "action": "ビデオ切り替え",
+        "key": {
+          "windows": "Alt + V",
+          "macos": "⌘ + Shift + V"
+        },
+        "description": "ビデオのオン/オフを切り替え",
+        "tags": ["ビデオ", "video", "カメラ", "bideo"]
+      }
+    ]
+  }
+}
