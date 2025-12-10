@@ -2,7 +2,6 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -14,10 +13,13 @@ use tauri::{
     SystemTrayMenu, SystemTrayMenuItem, WindowEvent,
 };
 
+// デフォルトアイコン
+const DEFAULT_APP_ICON: &str = "📌";
+
 // キー設定（文字列またはプラットフォーム別オブジェクト）
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum ShortcutKey {
+pub enum KeyBinding {
     Simple(String),
     Platform {
         #[serde(default)]
@@ -27,7 +29,7 @@ pub enum ShortcutKey {
     },
 }
 
-impl ShortcutKey {
+impl KeyBinding {
     /// プラットフォームに応じたキーを取得
     pub fn get_key(&self, is_macos: bool) -> Option<String> {
         match self {
@@ -43,19 +45,60 @@ impl ShortcutKey {
     }
 }
 
-// ショートカットの構造体（アプリ名はJSONのキーから取得）
+// バインド設定（文字列または配列）
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Shortcut {
-    /// アクション名（表示用）
+#[serde(untagged)]
+pub enum AppBind {
+    Single(String),
+    Multiple(Vec<String>),
+}
+
+impl AppBind {
+    /// バインド値のリストを取得
+    pub fn get_binds(&self) -> Vec<String> {
+        match self {
+            Self::Single(s) => vec![s.clone()],
+            Self::Multiple(v) => v.clone(),
+        }
+    }
+}
+
+// キーバインド設定
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Keybinding {
     pub action: String,
-    /// キー設定
-    pub key: ShortcutKey,
-    /// 説明
-    #[serde(default)]
-    pub description: String,
-    /// 検索用タグ（ローマ字含む）
+    pub key: KeyBinding,
     #[serde(default)]
     pub tags: Vec<String>,
+}
+
+// アプリ設定（統合形式）
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AppConfig {
+    #[serde(default)]
+    pub icon: Option<String>,
+    pub name: String,
+    #[serde(default)]
+    pub bind: Option<AppBind>,
+    #[serde(default)]
+    pub keybindings: Vec<Keybinding>,
+}
+
+impl AppConfig {
+    /// アイコンを取得（未設定の場合はデフォルト）
+    pub fn get_icon(&self) -> String {
+        self.icon
+            .clone()
+            .unwrap_or_else(|| DEFAULT_APP_ICON.to_string())
+    }
+
+    /// バインド値のリストを取得（未設定の場合はnameを使用）
+    pub fn get_binds(&self) -> Vec<String> {
+        match &self.bind {
+            Some(bind) => bind.get_binds(),
+            None => vec![self.name.clone()],
+        }
+    }
 }
 
 // フロントエンドに渡す正規化されたショートカット
@@ -64,140 +107,28 @@ pub struct NormalizedShortcut {
     pub app: String,
     pub action: String,
     pub key: String,
-    pub description: String,
     pub tags: Vec<String>,
 }
 
-// プラットフォーム固有のアプリマッチング設定
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct PlatformAppMatch {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub process: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub window: Option<String>,
-}
-
-// プラットフォーム別設定
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct PlatformConfig {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub windows: Option<PlatformAppMatch>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub macos: Option<PlatformAppMatch>,
-}
-
-// アプリ設定（オブジェクト形式）
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct AppRuleObject {
-    pub display: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub process: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub window: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub platform: Option<PlatformConfig>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub icon: Option<String>,
-}
-
-// アプリ設定（文字列またはオブジェクト）
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum AppRule {
-    Simple(String),
-    Detailed(AppRuleObject),
-}
-
-// デフォルトアイコン
-const DEFAULT_APP_ICON: &str = "📌";
-
-// 正規化されたアプリルール（内部処理用）
+// 正規化されたアプリ情報（フロントエンドに渡す用）
 #[derive(Debug, Clone, Serialize)]
-pub struct NormalizedAppRule {
-    pub display: String,
-    pub process: Option<String>,
-    pub window: Option<String>,
+pub struct NormalizedApp {
+    pub name: String,
     pub icon: String,
 }
 
-impl AppRule {
-    /// プラットフォームに応じて正規化されたルールを返す
-    pub fn normalize(&self, is_macos: bool) -> NormalizedAppRule {
-        match self {
-            Self::Simple(name) => NormalizedAppRule {
-                display: name.clone(),
-                process: Some(name.clone()),
-                window: Some(name.clone()),
-                icon: DEFAULT_APP_ICON.to_string(),
-            },
-            Self::Detailed(obj) => {
-                let icon = obj.icon.clone().unwrap_or_else(|| DEFAULT_APP_ICON.to_string());
-
-                // プラットフォーム別設定があればそれを使用
-                if let Some(ref platform) = obj.platform {
-                    let platform_match = if is_macos {
-                        platform.macos.as_ref()
-                    } else {
-                        platform.windows.as_ref()
-                    };
-
-                    if let Some(pm) = platform_match {
-                        return NormalizedAppRule {
-                            display: obj.display.clone(),
-                            process: pm.process.clone(),
-                            window: pm.window.clone(),
-                            icon,
-                        };
-                    }
-                }
-
-                // プラットフォーム別設定がなければ共通設定を使用
-                NormalizedAppRule {
-                    display: obj.display.clone(),
-                    process: obj.process.clone(),
-                    window: obj.window.clone(),
-                    icon,
-                }
-            }
-        }
-    }
+// アクティブウィンドウ情報
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct ActiveWindowInfo {
+    pub process: Option<String>,
+    pub window: Option<String>,
 }
 
-// ショートカット設定ファイルの構造体（アプリ名 -> ショートカット配列）
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ShortcutsConfig {
-    pub shortcuts: HashMap<String, Vec<Shortcut>>,
-}
+// デフォルトのキーバインド設定（JSONファイルから読み込み）
+const DEFAULT_KEYBINDINGS_JSON: &str = include_str!("../defaults/keybindings.json");
 
-impl Default for ShortcutsConfig {
-    fn default() -> Self {
-        Self {
-            shortcuts: get_default_shortcuts(),
-        }
-    }
-}
-
-// アプリ設定ファイルの構造体
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct AppsConfig {
-    pub apps: Vec<AppRule>,
-}
-
-impl Default for AppsConfig {
-    fn default() -> Self {
-        Self {
-            apps: get_default_apps(),
-        }
-    }
-}
-
-// デフォルトのアプリ設定（JSONファイルから読み込み）
-const DEFAULT_APPS_JSON: &str = include_str!("../defaults/apps.json");
-
-fn get_default_apps() -> Vec<AppRule> {
-    serde_json::from_str::<AppsConfig>(DEFAULT_APPS_JSON)
-        .map(|config| config.apps)
-        .unwrap_or_default()
+fn get_default_keybindings() -> Vec<AppConfig> {
+    serde_json::from_str::<Vec<AppConfig>>(DEFAULT_KEYBINDINGS_JSON).unwrap_or_default()
 }
 
 // 設定ディレクトリのパスを取得
@@ -206,36 +137,31 @@ fn get_config_dir() -> Option<PathBuf> {
     Some(config_dir.join("shortcut-finder"))
 }
 
-// ショートカット設定ファイルのパスを取得
-fn get_shortcuts_config_path() -> Option<PathBuf> {
-    Some(get_config_dir()?.join("shortcuts.json"))
+// キーバインド設定ファイルのパスを取得
+fn get_keybindings_config_path() -> Option<PathBuf> {
+    Some(get_config_dir()?.join("keybindings.json"))
 }
 
-// アプリ設定ファイルのパスを取得
-fn get_apps_config_path() -> Option<PathBuf> {
-    Some(get_config_dir()?.join("apps.json"))
-}
-
-// ショートカット設定を読み込む
-fn load_shortcuts_config() -> ShortcutsConfig {
-    if let Some(path) = get_shortcuts_config_path() {
+// キーバインド設定を読み込む
+fn load_keybindings_config() -> Vec<AppConfig> {
+    if let Some(path) = get_keybindings_config_path() {
         if path.exists() {
             if let Ok(content) = fs::read_to_string(&path) {
-                if let Ok(config) = serde_json::from_str::<ShortcutsConfig>(&content) {
+                if let Ok(config) = serde_json::from_str::<Vec<AppConfig>>(&content) {
                     return config;
                 }
             }
         }
     }
     // ファイルがなければデフォルトを返し、設定ファイルを作成
-    let config = ShortcutsConfig::default();
-    let _ = save_shortcuts_config(&config);
+    let config = get_default_keybindings();
+    let _ = save_keybindings_config(&config);
     config
 }
 
-// ショートカット設定を保存
-fn save_shortcuts_config(config: &ShortcutsConfig) -> Result<(), String> {
-    let path = get_shortcuts_config_path().ok_or("設定ディレクトリが見つかりません")?;
+// キーバインド設定を保存
+fn save_keybindings_config(config: &Vec<AppConfig>) -> Result<(), String> {
+    let path = get_keybindings_config_path().ok_or("設定ディレクトリが見つかりません")?;
 
     // ディレクトリを作成
     if let Some(parent) = path.parent() {
@@ -246,54 +172,6 @@ fn save_shortcuts_config(config: &ShortcutsConfig) -> Result<(), String> {
     fs::write(&path, json).map_err(|e| format!("ファイル書き込みエラー: {e}"))?;
 
     Ok(())
-}
-
-// アプリ設定を読み込む
-fn load_apps_config() -> AppsConfig {
-    if let Some(path) = get_apps_config_path() {
-        if path.exists() {
-            if let Ok(content) = fs::read_to_string(&path) {
-                if let Ok(config) = serde_json::from_str::<AppsConfig>(&content) {
-                    return config;
-                }
-            }
-        }
-    }
-    // ファイルがなければデフォルトを返し、設定ファイルを作成
-    let config = AppsConfig::default();
-    let _ = save_apps_config(&config);
-    config
-}
-
-// アプリ設定を保存
-fn save_apps_config(config: &AppsConfig) -> Result<(), String> {
-    let path = get_apps_config_path().ok_or("設定ディレクトリが見つかりません")?;
-
-    // ディレクトリを作成
-    if let Some(parent) = path.parent() {
-        fs::create_dir_all(parent).map_err(|e| format!("ディレクトリ作成エラー: {e}"))?;
-    }
-
-    let json = serde_json::to_string_pretty(config).map_err(|e| format!("JSON変換エラー: {e}"))?;
-    fs::write(&path, json).map_err(|e| format!("ファイル書き込みエラー: {e}"))?;
-
-    Ok(())
-}
-
-// デフォルトのショートカットデータ（JSONファイルから読み込み）
-const DEFAULT_SHORTCUTS_JSON: &str = include_str!("../defaults/shortcuts.json");
-
-fn get_default_shortcuts() -> HashMap<String, Vec<Shortcut>> {
-    serde_json::from_str::<ShortcutsConfig>(DEFAULT_SHORTCUTS_JSON)
-        .map(|config| config.shortcuts)
-        .unwrap_or_default()
-}
-
-// アクティブウィンドウ情報
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
-pub struct ActiveWindowInfo {
-    pub process: Option<String>,
-    pub window: Option<String>,
 }
 
 // 前回アクティブだったアプリ情報を保持
@@ -487,36 +365,35 @@ fn get_active_app() -> Option<ActiveWindowInfo> {
 
 /// アクティブウィンドウにマッチするアプリを検索
 /// プロセス名またはウィンドウタイトルで完全一致（大文字小文字無視）
-fn match_apps(info: &ActiveWindowInfo, apps: &[AppRule]) -> Vec<NormalizedAppRule> {
-    let is_macos = cfg!(target_os = "macos");
-
+fn match_apps(info: &ActiveWindowInfo, apps: &[AppConfig]) -> Vec<NormalizedApp> {
     apps.iter()
-        .filter_map(|rule| {
-            let normalized = rule.normalize(is_macos);
+        .filter_map(|app| {
+            let binds = app.get_binds();
             let mut matched = false;
 
-            // プロセス名で完全一致
-            if let (Some(ref rule_process), Some(ref info_process)) =
-                (&normalized.process, &info.process)
-            {
-                if info_process.to_lowercase() == rule_process.to_lowercase() {
-                    matched = true;
-                }
-            }
-
-            // ウィンドウタイトルで完全一致
-            if !matched {
-                if let (Some(ref rule_window), Some(ref info_window)) =
-                    (&normalized.window, &info.window)
-                {
-                    if info_window.to_lowercase() == rule_window.to_lowercase() {
+            for bind in &binds {
+                // プロセス名で完全一致
+                if let Some(ref info_process) = info.process {
+                    if info_process.to_lowercase() == bind.to_lowercase() {
                         matched = true;
+                        break;
+                    }
+                }
+
+                // ウィンドウタイトルで完全一致
+                if let Some(ref info_window) = info.window {
+                    if info_window.to_lowercase() == bind.to_lowercase() {
+                        matched = true;
+                        break;
                     }
                 }
             }
 
             if matched {
-                Some(normalized)
+                Some(NormalizedApp {
+                    name: app.name.clone(),
+                    icon: app.get_icon(),
+                })
             } else {
                 None
             }
@@ -526,10 +403,10 @@ fn match_apps(info: &ActiveWindowInfo, apps: &[AppRule]) -> Vec<NormalizedAppRul
 
 // マッチしたアプリ情報を取得するコマンド
 #[tauri::command]
-fn get_matched_apps(info: Option<ActiveWindowInfo>) -> Vec<NormalizedAppRule> {
-    let apps_config = load_apps_config();
+fn get_matched_apps(info: Option<ActiveWindowInfo>) -> Vec<NormalizedApp> {
+    let config = load_keybindings_config();
     match info {
-        Some(ref window_info) => match_apps(window_info, &apps_config.apps),
+        Some(ref window_info) => match_apps(window_info, &config),
         None => vec![],
     }
 }
@@ -538,25 +415,24 @@ fn get_matched_apps(info: Option<ActiveWindowInfo>) -> Vec<NormalizedAppRule> {
 #[tauri::command]
 fn get_shortcuts() -> Vec<NormalizedShortcut> {
     let is_macos = cfg!(target_os = "macos");
-    let config = load_shortcuts_config();
+    let config = load_keybindings_config();
 
     config
-        .shortcuts
         .into_iter()
-        .flat_map(|(app_name, shortcuts)| {
-            shortcuts.into_iter().filter_map(move |shortcut| {
+        .flat_map(|app| {
+            let app_name = app.name.clone();
+            app.keybindings.into_iter().filter_map(move |kb| {
                 // プラットフォームに応じたキーを取得
-                let key = shortcut.key.get_key(is_macos)?;
+                let key = kb.key.get_key(is_macos)?;
                 // キーが"-"の場合は対象外
                 if key == "-" {
                     return None;
                 }
                 Some(NormalizedShortcut {
                     app: app_name.clone(),
-                    action: shortcut.action,
+                    action: kb.action,
                     key,
-                    description: shortcut.description,
-                    tags: shortcut.tags,
+                    tags: kb.tags,
                 })
             })
         })
@@ -566,55 +442,13 @@ fn get_shortcuts() -> Vec<NormalizedShortcut> {
 // 設定ファイルのパスを取得するコマンド
 #[tauri::command]
 fn get_config_file_path() -> Option<String> {
-    get_shortcuts_config_path().map(|p| p.to_string_lossy().to_string())
+    get_keybindings_config_path().map(|p| p.to_string_lossy().to_string())
 }
 
-// ショートカットを保存するコマンド
-#[tauri::command]
-fn save_shortcuts(shortcuts: HashMap<String, Vec<Shortcut>>) -> Result<(), String> {
-    let config = ShortcutsConfig { shortcuts };
-    save_shortcuts_config(&config)
-}
-
-// ショートカット設定ファイルを開くコマンド
+// キーバインド設定ファイルを開くコマンド
 #[tauri::command]
 fn open_config_file() -> Result<(), String> {
-    let path = get_shortcuts_config_path().ok_or("設定ファイルのパスが見つかりません")?;
-
-    #[cfg(target_os = "windows")]
-    {
-        std::process::Command::new("cmd")
-            .args(["/c", "start", "", path.to_string_lossy().as_ref()])
-            .spawn()
-            .map_err(|e| format!("ファイルを開けませんでした: {e}"))?;
-    }
-
-    #[cfg(target_os = "macos")]
-    {
-        std::process::Command::new("open")
-            .arg(&path)
-            .spawn()
-            .map_err(|e| format!("ファイルを開けませんでした: {e}"))?;
-    }
-
-    #[cfg(target_os = "linux")]
-    {
-        std::process::Command::new("xdg-open")
-            .arg(&path)
-            .spawn()
-            .map_err(|e| format!("ファイルを開けませんでした: {e}"))?;
-    }
-
-    Ok(())
-}
-
-// アプリ設定ファイルを開くコマンド
-#[tauri::command]
-fn open_apps_config_file() -> Result<(), String> {
-    // ファイルが存在しない場合は作成する
-    let _ = load_apps_config();
-
-    let path = get_apps_config_path().ok_or("アプリ設定ファイルのパスが見つかりません")?;
+    let path = get_keybindings_config_path().ok_or("設定ファイルのパスが見つかりません")?;
 
     #[cfg(target_os = "windows")]
     {
@@ -645,15 +479,12 @@ fn open_apps_config_file() -> Result<(), String> {
 
 fn create_system_tray() -> SystemTray {
     let show = CustomMenuItem::new("show".to_string(), "ウィンドウを表示");
-    let shortcuts_config =
-        CustomMenuItem::new("shortcuts_config".to_string(), "ショートカット設定を開く");
-    let apps_config = CustomMenuItem::new("apps_config".to_string(), "アプリ設定を開く");
+    let config = CustomMenuItem::new("config".to_string(), "設定を開く");
     let quit = CustomMenuItem::new("quit".to_string(), "終了");
 
     let tray_menu = SystemTrayMenu::new()
         .add_item(show)
-        .add_item(shortcuts_config)
-        .add_item(apps_config)
+        .add_item(config)
         .add_native_item(SystemTrayMenuItem::Separator)
         .add_item(quit);
 
@@ -671,11 +502,8 @@ fn main() {
                 "show" => {
                     toggle_window(app);
                 }
-                "shortcuts_config" => {
+                "config" => {
                     let _ = open_config_file();
-                }
-                "apps_config" => {
-                    let _ = open_apps_config_file();
                 }
                 "quit" => {
                     std::process::exit(0);
@@ -755,9 +583,7 @@ fn main() {
             get_matched_apps,
             get_shortcuts,
             get_config_file_path,
-            save_shortcuts,
-            open_config_file,
-            open_apps_config_file
+            open_config_file
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

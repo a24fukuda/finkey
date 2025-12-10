@@ -1,6 +1,6 @@
 import type {
 	ActiveWindowInfo,
-	NormalizedAppRule,
+	NormalizedApp,
 	Platform,
 	Shortcut,
 } from "./types";
@@ -77,17 +77,13 @@ const resultCount = document.getElementById("result-count") as HTMLElement;
 const openConfigBtn = document.getElementById(
 	"open-config-btn",
 ) as HTMLButtonElement;
-const openAppsConfigBtn = document.getElementById(
-	"open-apps-config-btn",
-) as HTMLButtonElement;
 
 // 状態
 let currentPlatform: Platform = "mac";
 let selectedIndex = 0;
 let filteredShortcuts: Shortcut[] = [];
-let expandedIndex = -1;
 let activeWindowInfo: ActiveWindowInfo | null = null;
-let matchedApps: NormalizedAppRule[] = [];
+let matchedApps: NormalizedApp[] = [];
 let shortcuts: Shortcut[] = [];
 
 // デフォルトアイコン
@@ -96,7 +92,7 @@ const DEFAULT_APP_ICON = "📌";
 // アプリ名からアイコンを取得
 function getAppIcon(appName: string): string {
 	const matchedApp = matchedApps.find(
-		(app) => app.display.toLowerCase() === appName.toLowerCase(),
+		(app) => app.name.toLowerCase() === appName.toLowerCase(),
 	);
 	return matchedApp?.icon ?? DEFAULT_APP_ICON;
 }
@@ -126,7 +122,6 @@ async function init(): Promise<void> {
 	searchInput.addEventListener("input", handleTextSearch);
 	searchInput.addEventListener("keydown", handleKeydown);
 	openConfigBtn.addEventListener("click", openConfigFile);
-	openAppsConfigBtn.addEventListener("click", openAppsConfigFile);
 
 	// Tauriイベントリスナー（アクティブウィンドウ情報を受け取る）
 	try {
@@ -135,7 +130,7 @@ async function init(): Promise<void> {
 
 			// バックエンドでアプリをマッチング
 			try {
-				matchedApps = await invoke<NormalizedAppRule[]>("get_matched_apps", {
+				matchedApps = await invoke<NormalizedApp[]>("get_matched_apps", {
 					info: activeWindowInfo,
 				});
 			} catch (_e) {
@@ -146,7 +141,7 @@ async function init(): Promise<void> {
 			// UIにアプリ名を表示
 			let displayText = "-";
 			if (matchedApps.length > 0) {
-				displayText = matchedApps.map((app) => app.display).join(", ");
+				displayText = matchedApps.map((app) => app.name).join(", ");
 			} else if (activeWindowInfo) {
 				displayText = activeWindowInfo.process ?? "-";
 			}
@@ -154,7 +149,6 @@ async function init(): Promise<void> {
 
 			// 状態をリセット
 			selectedIndex = 0;
-			expandedIndex = -1;
 			searchInput.value = "";
 			searchInput.focus();
 			searchInput.select();
@@ -169,7 +163,6 @@ async function init(): Promise<void> {
 // テキスト検索処理
 function handleTextSearch(): void {
 	selectedIndex = 0;
-	expandedIndex = -1;
 	filterAndDisplay();
 }
 
@@ -191,10 +184,6 @@ async function handleKeydown(e: KeyboardEvent): Promise<void> {
 				updateSelection();
 				scrollToSelected();
 			}
-			break;
-		case "Enter":
-			e.preventDefault();
-			toggleExpand(selectedIndex);
 			break;
 		case "Escape":
 			e.preventDefault();
@@ -221,15 +210,6 @@ async function openConfigFile(): Promise<void> {
 	}
 }
 
-// アプリ設定ファイルを開く
-async function openAppsConfigFile(): Promise<void> {
-	try {
-		await invoke("open_apps_config_file");
-	} catch (e) {
-		console.log("Failed to open apps config file:", e);
-	}
-}
-
 // フィルタリングと表示
 function filterAndDisplay(): void {
 	filterByText();
@@ -240,8 +220,8 @@ function filterAndDisplay(): void {
 function filterByText(): void {
 	const query = searchInput.value.toLowerCase().trim();
 
-	// 検出アプリ名のリストを取得（表示名で比較）
-	const detectedAppNames = matchedApps.map((app) => app.display.toLowerCase());
+	// 検出アプリ名のリストを取得（name で比較）
+	const detectedAppNames = matchedApps.map((app) => app.name.toLowerCase());
 
 	filteredShortcuts = shortcuts.filter((shortcut) => {
 		// アプリ名フィルタ: 検出アプリと一致するもののみ
@@ -290,7 +270,6 @@ function createResultItem(shortcut: Shortcut, index: number): HTMLDivElement {
 	const item = document.createElement("div");
 	item.className = "result-item";
 	if (index === selectedIndex) item.classList.add("selected");
-	if (index === expandedIndex) item.classList.add("expanded");
 	item.dataset.index = String(index);
 
 	const icon = getAppIcon(shortcut.app);
@@ -300,13 +279,11 @@ function createResultItem(shortcut: Shortcut, index: number): HTMLDivElement {
 	// ハイライト処理
 	const query = searchInput.value.toLowerCase().trim();
 	const highlightedAction = highlightText(shortcut.action, query);
-	const highlightedDesc = highlightText(shortcut.description, query);
 
-	let html = `
+	item.innerHTML = `
     <div class="result-icon">${icon}</div>
     <div class="result-content">
       <div class="result-action">${highlightedAction}</div>
-      <div class="result-description">${highlightedDesc}</div>
       <span class="result-category">${appLabel}</span>
     </div>
     <div class="result-shortcut">
@@ -314,28 +291,9 @@ function createResultItem(shortcut: Shortcut, index: number): HTMLDivElement {
     </div>
   `;
 
-	// 展開時の詳細
-	if (index === expandedIndex) {
-		html += `
-      <div class="result-details">
-        <div class="result-details-row">
-          <span class="detail-label">キー:</span>
-          <span class="shortcut-key ${currentPlatform}">${escapeHtml(shortcut.key)}</span>
-        </div>
-        <div class="result-details-row" style="margin-top: 8px;">
-          <span class="detail-label">タグ:</span>
-          <span class="detail-value">${shortcut.tags.join(", ")}</span>
-        </div>
-      </div>
-    `;
-	}
-
-	item.innerHTML = html;
-
 	item.addEventListener("click", () => {
 		selectedIndex = index;
 		updateSelection();
-		toggleExpand(index);
 	});
 
 	return item;
@@ -376,16 +334,6 @@ function scrollToSelected(): void {
 	if (selected) {
 		selected.scrollIntoView({ block: "nearest", behavior: "auto" });
 	}
-}
-
-// 展開/折りたたみ
-function toggleExpand(index: number): void {
-	if (expandedIndex === index) {
-		expandedIndex = -1;
-	} else {
-		expandedIndex = index;
-	}
-	displayResults();
 }
 
 // 初期化実行

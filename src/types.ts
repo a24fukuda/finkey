@@ -5,7 +5,6 @@ export interface Shortcut {
 	app: string;
 	action: string;
 	key: string;
-	description: string;
 	tags: string[];
 }
 
@@ -15,11 +14,9 @@ export interface ActiveWindowInfo {
 	window?: string;
 }
 
-/** 正規化されたアプリルール */
-export interface NormalizedAppRule {
-	display: string;
-	process?: string;
-	window?: string;
+/** 正規化されたアプリ情報（マッチしたアプリ） */
+export interface NormalizedApp {
+	name: string;
 	icon: string;
 }
 
@@ -32,11 +29,7 @@ export type TauriCommand =
 	| "get_shortcuts"
 	| "get_matched_apps"
 	| "hide_main_window"
-	| "open_config_file"
-	| "open_apps_config_file"
-	| "get_active_app"
-	| "get_config_file_path"
-	| "save_shortcuts";
+	| "open_config_file";
 
 /** Tauri イベント名 */
 export type TauriEvent = "window-shown" | "window-hidden";
