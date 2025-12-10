@@ -96,6 +96,8 @@ pub struct AppRuleObject {
     pub window: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub platform: Option<PlatformConfig>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub icon: Option<String>,
 }
 
 // アプリ設定（文字列またはオブジェクト）
@@ -106,12 +108,16 @@ pub enum AppRule {
     Detailed(AppRuleObject),
 }
 
+// デフォルトアイコン
+const DEFAULT_APP_ICON: &str = "📌";
+
 // 正規化されたアプリルール（内部処理用）
 #[derive(Debug, Clone, Serialize)]
 pub struct NormalizedAppRule {
     pub display: String,
     pub process: Option<String>,
     pub window: Option<String>,
+    pub icon: String,
 }
 
 impl AppRule {
@@ -122,8 +128,11 @@ impl AppRule {
                 display: name.clone(),
                 process: Some(name.clone()),
                 window: Some(name.clone()),
+                icon: DEFAULT_APP_ICON.to_string(),
             },
             Self::Detailed(obj) => {
+                let icon = obj.icon.clone().unwrap_or_else(|| DEFAULT_APP_ICON.to_string());
+
                 // プラットフォーム別設定があればそれを使用
                 if let Some(ref platform) = obj.platform {
                     let platform_match = if is_macos {
@@ -137,6 +146,7 @@ impl AppRule {
                             display: obj.display.clone(),
                             process: pm.process.clone(),
                             window: pm.window.clone(),
+                            icon,
                         };
                     }
                 }
@@ -146,6 +156,7 @@ impl AppRule {
                     display: obj.display.clone(),
                     process: obj.process.clone(),
                     window: obj.window.clone(),
+                    icon,
                 }
             }
         }

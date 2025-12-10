@@ -20,6 +20,7 @@ export interface NormalizedAppRule {
 	display: string;
 	process?: string;
 	window?: string;
+	icon: string;
 }
 
 /** プラットフォーム種別 */

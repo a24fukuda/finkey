@@ -90,25 +90,16 @@ let activeWindowInfo: ActiveWindowInfo | null = null;
 let matchedApps: NormalizedAppRule[] = [];
 let shortcuts: Shortcut[] = [];
 
-// アプリアイコンマッピング
-const appIcons: Record<string, string> = {
-	"VS Code": "💻",
-	Cursor: "💻",
-	Chrome: "🌐",
-	Edge: "🌐",
-	Firefox: "🌐",
-	Safari: "🌐",
-	Brave: "🌐",
-	Slack: "💬",
-	Zoom: "📹",
-	Excel: "📊",
-	エクスプローラー: "📁",
-	Finder: "📁",
-	"Windows Terminal": "⬛",
-	Terminal: "⬛",
-	PowerShell: "⬛",
-	コマンドプロンプト: "⬛",
-};
+// デフォルトアイコン
+const DEFAULT_APP_ICON = "📌";
+
+// アプリ名からアイコンを取得
+function getAppIcon(appName: string): string {
+	const matchedApp = matchedApps.find(
+		(app) => app.display.toLowerCase() === appName.toLowerCase(),
+	);
+	return matchedApp?.icon ?? DEFAULT_APP_ICON;
+}
 
 // 初期化
 async function init(): Promise<void> {
@@ -302,7 +293,7 @@ function createResultItem(shortcut: Shortcut, index: number): HTMLDivElement {
 	if (index === expandedIndex) item.classList.add("expanded");
 	item.dataset.index = String(index);
 
-	const icon = appIcons[shortcut.app] ?? "⌨️";
+	const icon = getAppIcon(shortcut.app);
 	const displayKey = shortcut.key;
 	const appLabel = shortcut.app;
 

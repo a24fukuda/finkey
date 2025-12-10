@@ -3,31 +3,42 @@
     {
       "display": "Chrome",
       "process": "chrome",
-      "window": "Google Chrome"
+      "window": "Google Chrome",
+      "icon": "🌐"
     },
     {
       "display": "Edge",
       "process": "msedge",
-      "window": "Microsoft Edge"
+      "window": "Microsoft Edge",
+      "icon": "🌐"
     },
     {
       "display": "Firefox",
       "process": "firefox",
-      "window": "Firefox"
+      "window": "Firefox",
+      "icon": "🌐"
     },
-    "Safari",
+    {
+      "display": "Safari",
+      "process": "Safari",
+      "window": "Safari",
+      "icon": "🌐"
+    },
     {
       "display": "Brave",
       "process": "brave",
-      "window": "Brave"
+      "window": "Brave",
+      "icon": "🌐"
     },
     {
       "display": "VS Code",
       "process": "Code",
-      "window": "Visual Studio Code"
+      "window": "Visual Studio Code",
+      "icon": "💻"
     },
     {
       "display": "Cursor",
+      "icon": "💻",
       "platform": {
         "windows": {
           "process": "Cursor",
@@ -41,37 +52,54 @@
     },
     {
       "display": "エクスプローラー",
-      "process": "explorer"
+      "process": "explorer",
+      "icon": "📁"
     },
     {
       "display": "Finder",
-      "process": "Finder"
+      "process": "Finder",
+      "icon": "📁"
     },
-    "Slack",
-    "Zoom",
+    {
+      "display": "Slack",
+      "process": "Slack",
+      "window": "Slack",
+      "icon": "💬"
+    },
+    {
+      "display": "Zoom",
+      "process": "Zoom",
+      "window": "Zoom",
+      "icon": "📹"
+    },
     {
       "display": "Excel",
       "process": "EXCEL",
-      "window": "Excel"
+      "window": "Excel",
+      "icon": "📊"
     },
     {
       "display": "Windows Terminal",
       "process": "WindowsTerminal",
-      "window": "Windows Terminal"
+      "window": "Windows Terminal",
+      "icon": "⬛"
     },
     {
       "display": "Terminal",
-      "process": "Terminal"
+      "process": "Terminal",
+      "icon": "⬛"
     },
     {
       "display": "PowerShell",
       "process": "powershell",
-      "window": "PowerShell"
+      "window": "PowerShell",
+      "icon": "⬛"
     },
     {
       "display": "コマンドプロンプト",
       "process": "cmd",
-      "window": "コマンド プロンプト"
+      "window": "コマンド プロンプト",
+      "icon": "⬛"
     }
   ]
 }
