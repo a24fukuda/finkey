@@ -1,7 +1,7 @@
 {
   "build": {
-    "beforeDevCommand": "",
-    "beforeBuildCommand": "",
+    "beforeDevCommand": "npm run watch:ts",
+    "beforeBuildCommand": "npm run build:ts",
     "devPath": "../src",
     "distDir": "../src",
     "withGlobalTauri": true
