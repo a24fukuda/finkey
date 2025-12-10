@@ -486,7 +486,7 @@ fn get_active_app() -> Option<ActiveWindowInfo> {
 }
 
 /// アクティブウィンドウにマッチするアプリを検索
-/// プロセス名またはウィンドウタイトルで部分一致（大文字小文字無視）
+/// プロセス名またはウィンドウタイトルで完全一致（大文字小文字無視）
 fn match_apps(info: &ActiveWindowInfo, apps: &[AppRule]) -> Vec<NormalizedAppRule> {
     let is_macos = cfg!(target_os = "macos");
 
@@ -495,27 +495,21 @@ fn match_apps(info: &ActiveWindowInfo, apps: &[AppRule]) -> Vec<NormalizedAppRul
             let normalized = rule.normalize(is_macos);
             let mut matched = false;
 
-            // プロセス名でマッチ
+            // プロセス名で完全一致
             if let (Some(ref rule_process), Some(ref info_process)) =
                 (&normalized.process, &info.process)
             {
-                if info_process
-                    .to_lowercase()
-                    .contains(&rule_process.to_lowercase())
-                {
+                if info_process.to_lowercase() == rule_process.to_lowercase() {
                     matched = true;
                 }
             }
 
-            // ウィンドウタイトルでマッチ
+            // ウィンドウタイトルで完全一致
             if !matched {
                 if let (Some(ref rule_window), Some(ref info_window)) =
                     (&normalized.window, &info.window)
                 {
-                    if info_window
-                        .to_lowercase()
-                        .contains(&rule_window.to_lowercase())
-                    {
+                    if info_window.to_lowercase() == rule_window.to_lowercase() {
                         matched = true;
                     }
                 }

@@ -63,25 +63,19 @@ body {
 .detected-app {
 	display: flex;
 	align-items: center;
-	padding: 4px 10px;
+	padding: 6px 12px;
 	background: rgba(10, 132, 255, 0.1);
 	border: 1px solid rgba(10, 132, 255, 0.2);
 	border-radius: 6px;
-	font-size: 11px;
-	margin-left: auto;
-	margin-right: 8px;
+	font-size: 12px;
+	margin-right: 12px;
 	flex-shrink: 0;
-}
-
-.detected-app-label {
-	color: var(--text-muted);
-	margin-right: 6px;
 }
 
 .detected-app-name {
 	color: var(--accent-color);
-	font-weight: 500;
-	max-width: 120px;
+	font-weight: 600;
+	max-width: 150px;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
