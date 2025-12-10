@@ -92,7 +92,6 @@ let shortcuts: Shortcut[] = [];
 
 // アプリアイコンマッピング
 const appIcons: Record<string, string> = {
-	"*": "⌨️",
 	"VS Code": "💻",
 	Cursor: "💻",
 	Chrome: "🌐",
@@ -250,64 +249,25 @@ function filterAndDisplay(): void {
 function filterByText(): void {
 	const query = searchInput.value.toLowerCase().trim();
 
+	// 検出アプリ名のリストを取得（表示名で比較）
+	const detectedAppNames = matchedApps.map((app) => app.display.toLowerCase());
+
 	filteredShortcuts = shortcuts.filter((shortcut) => {
-		// 検索クエリがない場合は全て表示
+		// アプリ名フィルタ: 検出アプリと一致するもののみ
+		const isMatchedApp = detectedAppNames.includes(shortcut.app.toLowerCase());
+
+		if (!isMatchedApp) {
+			return false;
+		}
+
+		// 検索クエリがない場合はアプリフィルタのみ適用
 		if (!query) {
 			return true;
 		}
 
-		// 検索マッチング（app, action, key, description, tags）
-		const searchTargets = [
-			shortcut.app,
-			shortcut.action,
-			shortcut.description,
-			shortcut.key,
-			...shortcut.tags,
-		].map((s) => s.toLowerCase());
-
-		return searchTargets.some((target) => target.includes(query));
+		// タグの部分一致検索
+		return shortcut.tags.some((tag) => tag.toLowerCase().includes(query));
 	});
-
-	// 検索クエリがある場合は関連度でソート
-	if (query) {
-		filteredShortcuts.sort((a, b) => {
-			const aScore = getTextRelevanceScore(a, query);
-			const bScore = getTextRelevanceScore(b, query);
-			return bScore - aScore;
-		});
-	}
-}
-
-// テキスト関連度スコア計算
-function getTextRelevanceScore(shortcut: Shortcut, query: string): number {
-	let score = 0;
-	const q = query.toLowerCase();
-
-	// アクション名の完全一致
-	if (shortcut.action.toLowerCase() === q) score += 100;
-	// アクション名の先頭一致
-	else if (shortcut.action.toLowerCase().startsWith(q)) score += 70;
-	// アクション名の部分一致
-	else if (shortcut.action.toLowerCase().includes(q)) score += 50;
-
-	// アプリ名の一致
-	if (shortcut.app !== "*") {
-		if (shortcut.app.toLowerCase() === q) score += 80;
-		else if (shortcut.app.toLowerCase().startsWith(q)) score += 60;
-		else if (shortcut.app.toLowerCase().includes(q)) score += 40;
-	}
-
-	// タグの一致（ローマ字検索はタグに含まれる）
-	for (const tag of shortcut.tags) {
-		if (tag.toLowerCase() === q) score += 45;
-		else if (tag.toLowerCase().startsWith(q)) score += 30;
-		else if (tag.toLowerCase().includes(q)) score += 15;
-	}
-
-	// 説明の一致
-	if (shortcut.description.toLowerCase().includes(q)) score += 10;
-
-	return score;
 }
 
 // 結果表示
@@ -344,8 +304,7 @@ function createResultItem(shortcut: Shortcut, index: number): HTMLDivElement {
 
 	const icon = appIcons[shortcut.app] ?? "⌨️";
 	const displayKey = shortcut.key;
-	// アプリ名表示（"*"は「共通」と表示）
-	const appLabel = shortcut.app === "*" ? "共通" : shortcut.app;
+	const appLabel = shortcut.app;
 
 	// ハイライト処理
 	const query = searchInput.value.toLowerCase().trim();
