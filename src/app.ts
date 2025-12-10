@@ -77,6 +77,13 @@ const resultCount = document.getElementById("result-count") as HTMLElement;
 const openConfigBtn = document.getElementById(
 	"open-config-btn",
 ) as HTMLButtonElement;
+const themeToggleBtn = document.getElementById(
+	"theme-toggle",
+) as HTMLButtonElement;
+
+// テーマ設定
+type ThemeSetting = "system" | "light" | "dark";
+let currentThemeSetting: ThemeSetting = "system";
 
 // 状態
 let currentPlatform: Platform = "mac";
@@ -89,6 +96,71 @@ let shortcuts: Shortcut[] = [];
 // デフォルトアイコン
 const DEFAULT_APP_ICON = "📌";
 
+// システムテーマを取得（同期的にCSSメディアクエリを使用）
+function getSystemTheme(): "light" | "dark" {
+	return window.matchMedia("(prefers-color-scheme: dark)").matches
+		? "dark"
+		: "light";
+}
+
+// テーマを適用する
+function applyTheme(): void {
+	let effectiveTheme: "light" | "dark";
+
+	if (currentThemeSetting === "system") {
+		effectiveTheme = getSystemTheme();
+	} else {
+		effectiveTheme = currentThemeSetting;
+	}
+
+	// data-theme属性を設定（lightの場合のみ属性を追加、darkはデフォルト）
+	if (effectiveTheme === "light") {
+		document.documentElement.setAttribute("data-theme", "light");
+	} else {
+		document.documentElement.removeAttribute("data-theme");
+	}
+
+	// data-theme-setting属性を設定（アイコン切り替え用）
+	document.documentElement.setAttribute(
+		"data-theme-setting",
+		currentThemeSetting,
+	);
+
+	// ボタンのtitleを更新
+	const titles: Record<ThemeSetting, string> = {
+		system: "テーマ: システム設定に従う",
+		light: "テーマ: ライト",
+		dark: "テーマ: ダーク",
+	};
+	themeToggleBtn.title = titles[currentThemeSetting];
+}
+
+// テーマ設定を切り替え（system -> light -> dark -> system）
+function toggleTheme(): void {
+	const order: ThemeSetting[] = ["system", "light", "dark"];
+	const currentIndex = order.indexOf(currentThemeSetting);
+	currentThemeSetting = order[(currentIndex + 1) % order.length];
+
+	// テーマを即座に適用
+	applyTheme();
+
+	// 設定を非同期で保存（UIには影響しない）
+	invoke("set_theme_setting", { theme: currentThemeSetting }).catch(() => {
+		console.log("Failed to save theme setting");
+	});
+}
+
+// テーマ設定を読み込み
+async function loadThemeSetting(): Promise<void> {
+	try {
+		const theme = await invoke<string>("get_theme_setting");
+		currentThemeSetting = theme as ThemeSetting;
+	} catch (_e) {
+		currentThemeSetting = "system";
+	}
+	applyTheme();
+}
+
 // アプリ名からアイコンを取得
 function getAppIcon(appName: string): string {
 	const matchedApp = matchedApps.find(
@@ -99,6 +171,9 @@ function getAppIcon(appName: string): string {
 
 // 初期化
 async function init(): Promise<void> {
+	// テーマを初期化
+	await loadThemeSetting();
+
 	// プラットフォーム検出
 	try {
 		const platform = await invoke<string>("get_platform");
@@ -122,11 +197,17 @@ async function init(): Promise<void> {
 	searchInput.addEventListener("input", handleTextSearch);
 	searchInput.addEventListener("keydown", handleKeydown);
 	openConfigBtn.addEventListener("click", openConfigFile);
+	themeToggleBtn.addEventListener("click", toggleTheme);
 
 	// Tauriイベントリスナー（アクティブウィンドウ情報を受け取る）
 	try {
 		await listen<ActiveWindowInfo | null>("window-shown", async (event) => {
 			activeWindowInfo = event.payload ?? null;
+
+			// ウィンドウ表示時にテーマを再適用（システム設定が変わっている可能性があるため）
+			if (currentThemeSetting === "system") {
+				applyTheme();
+			}
 
 			// バックエンドでアプリをマッチング
 			try {

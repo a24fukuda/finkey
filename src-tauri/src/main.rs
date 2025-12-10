@@ -124,6 +124,28 @@ pub struct ActiveWindowInfo {
     pub window: Option<String>,
 }
 
+// テーマ設定
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "lowercase")]
+pub enum ThemeSetting {
+    System,
+    Light,
+    Dark,
+}
+
+impl Default for ThemeSetting {
+    fn default() -> Self {
+        Self::System
+    }
+}
+
+// アプリ設定（settings.json）
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct AppSettings {
+    #[serde(default)]
+    pub theme: ThemeSetting,
+}
+
 // デフォルトのキーバインド設定（JSONファイルから読み込み）
 const DEFAULT_KEYBINDINGS_JSON: &str = include_str!("../defaults/keybindings.json");
 
@@ -140,6 +162,43 @@ fn get_config_dir() -> Option<PathBuf> {
 // キーバインド設定ファイルのパスを取得
 fn get_keybindings_config_path() -> Option<PathBuf> {
     Some(get_config_dir()?.join("keybindings.json"))
+}
+
+// アプリ設定ファイルのパスを取得
+fn get_settings_path() -> Option<PathBuf> {
+    Some(get_config_dir()?.join("settings.json"))
+}
+
+// アプリ設定を読み込む（ファイルがなければ作成）
+fn load_settings() -> AppSettings {
+    if let Some(path) = get_settings_path() {
+        if path.exists() {
+            if let Ok(content) = fs::read_to_string(&path) {
+                if let Ok(settings) = serde_json::from_str::<AppSettings>(&content) {
+                    return settings;
+                }
+            }
+        }
+    }
+    // ファイルがなければデフォルト設定を作成して保存
+    let settings = AppSettings::default();
+    let _ = save_settings(&settings);
+    settings
+}
+
+// アプリ設定を保存
+fn save_settings(settings: &AppSettings) -> Result<(), String> {
+    let path = get_settings_path().ok_or("設定ディレクトリが見つかりません")?;
+
+    // ディレクトリを作成
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent).map_err(|e| format!("ディレクトリ作成エラー: {e}"))?;
+    }
+
+    let json = serde_json::to_string_pretty(settings).map_err(|e| format!("JSON変換エラー: {e}"))?;
+    fs::write(&path, json).map_err(|e| format!("ファイル書き込みエラー: {e}"))?;
+
+    Ok(())
 }
 
 // キーバインド設定を読み込む
@@ -477,6 +536,39 @@ fn open_config_file() -> Result<(), String> {
     Ok(())
 }
 
+// テーマ設定を取得
+#[tauri::command]
+fn get_theme_setting() -> String {
+    let settings = load_settings();
+    match settings.theme {
+        ThemeSetting::System => "system".to_string(),
+        ThemeSetting::Light => "light".to_string(),
+        ThemeSetting::Dark => "dark".to_string(),
+    }
+}
+
+// テーマ設定を保存
+#[tauri::command]
+fn set_theme_setting(theme: String) -> Result<(), String> {
+    let mut settings = load_settings();
+    settings.theme = match theme.as_str() {
+        "light" => ThemeSetting::Light,
+        "dark" => ThemeSetting::Dark,
+        _ => ThemeSetting::System,
+    };
+    save_settings(&settings)
+}
+
+// システムテーマを取得（ウィンドウから）
+#[tauri::command]
+fn get_system_theme(window: tauri::Window) -> String {
+    match window.theme() {
+        Ok(tauri::Theme::Dark) => "dark".to_string(),
+        Ok(tauri::Theme::Light) => "light".to_string(),
+        _ => "light".to_string(),
+    }
+}
+
 fn create_system_tray() -> SystemTray {
     let show = CustomMenuItem::new("show".to_string(), "ウィンドウを表示");
     let config = CustomMenuItem::new("config".to_string(), "設定を開く");
@@ -583,7 +675,10 @@ fn main() {
             get_matched_apps,
             get_shortcuts,
             get_config_file_path,
-            open_config_file
+            open_config_file,
+            get_theme_setting,
+            set_theme_setting,
+            get_system_theme
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
