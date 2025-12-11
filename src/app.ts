@@ -405,10 +405,10 @@ function createResultItem(shortcut: Shortcut, index: number): HTMLDivElement {
 	const highlightedAction = highlightText(shortcut.action, query);
 
 	item.innerHTML = `
-    <div class="result-icon">${icon}</div>
+    <div class="result-icon">${escapeHtml(icon)}</div>
     <div class="result-content">
       <div class="result-action">${highlightedAction}</div>
-      <span class="result-category">${appLabel}</span>
+      <span class="result-category">${escapeHtml(appLabel)}</span>
     </div>
     <div class="result-shortcut">
       <span class="shortcut-key ${currentPlatform}">${escapeHtml(displayKey)}</span>

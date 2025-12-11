@@ -710,7 +710,7 @@ fn open_config_file() -> Result<(), String> {
     #[cfg(target_os = "windows")]
     {
         std::process::Command::new("cmd")
-            .args(["/c", "start", "", path.to_string_lossy().as_ref()])
+            .args(["/c", "start", "", &format!("\"{}\"", path.display())])
             .spawn()
             .map_err(|e| format!("ファイルを開けませんでした: {e}"))?;
     }
@@ -748,7 +748,7 @@ fn open_settings_file() -> Result<(), String> {
     #[cfg(target_os = "windows")]
     {
         std::process::Command::new("cmd")
-            .args(["/c", "start", "", path.to_string_lossy().as_ref()])
+            .args(["/c", "start", "", &format!("\"{}\"", path.display())])
             .spawn()
             .map_err(|e| format!("ファイルを開けませんでした: {e}"))?;
     }
