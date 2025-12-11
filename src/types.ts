@@ -3,6 +3,7 @@
 /** 正規化されたショートカット（フロントエンドで使用） */
 export interface Shortcut {
 	app: string;
+	icon: string;
 	action: string;
 	key: string;
 	tags: string[];

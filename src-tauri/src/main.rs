@@ -72,14 +72,46 @@ pub struct Keybinding {
     pub tags: Vec<String>,
 }
 
+// OS種別（windows または macos のみ）
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "lowercase")]
+pub enum OsType {
+    Windows,
+    #[serde(rename = "macos")]
+    MacOS,
+}
+
+impl OsType {
+    /// OS種別から表示名を取得
+    pub fn display_name(&self) -> &'static str {
+        match self {
+            Self::Windows => "Windows",
+            Self::MacOS => "macOS",
+        }
+    }
+
+    /// 現在のプラットフォームと一致するか
+    pub fn is_current_platform(&self) -> bool {
+        match self {
+            Self::Windows => cfg!(target_os = "windows"),
+            Self::MacOS => cfg!(target_os = "macos"),
+        }
+    }
+}
+
 // アプリ設定（統合形式）
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AppConfig {
     #[serde(default)]
     pub icon: Option<String>,
-    pub name: String,
+    /// アプリ名（osが指定されている場合は不要）
+    #[serde(default)]
+    pub name: Option<String>,
     #[serde(default)]
     pub bind: Option<AppBind>,
+    /// OS種別（windows または macos）。指定時はnameとbindは不要
+    #[serde(default)]
+    pub os: Option<OsType>,
     #[serde(default)]
     pub keybindings: Vec<Keybinding>,
 }
@@ -92,11 +124,29 @@ impl AppConfig {
             .unwrap_or_else(|| DEFAULT_APP_ICON.to_string())
     }
 
+    /// 表示名を取得（osがあればOS名、なければname）
+    pub fn get_name(&self) -> String {
+        if let Some(ref os) = self.os {
+            os.display_name().to_string()
+        } else {
+            self.name.clone().unwrap_or_default()
+        }
+    }
+
     /// バインド値のリストを取得（未設定の場合はnameを使用）
     pub fn get_binds(&self) -> Vec<String> {
         match &self.bind {
             Some(bind) => bind.get_binds(),
-            None => vec![self.name.clone()],
+            None => vec![self.get_name()],
+        }
+    }
+
+    /// 現在のプラットフォームで有効かどうか
+    /// osが指定されていない場合は常に有効、指定されている場合は一致時のみ有効
+    pub fn is_available(&self) -> bool {
+        match &self.os {
+            Some(os) => os.is_current_platform(),
+            None => true,
         }
     }
 }
@@ -105,6 +155,7 @@ impl AppConfig {
 #[derive(Debug, Clone, Serialize)]
 pub struct NormalizedShortcut {
     pub app: String,
+    pub icon: String,
     pub action: String,
     pub key: String,
     pub tags: Vec<String>,
@@ -450,7 +501,7 @@ fn match_apps(info: &ActiveWindowInfo, apps: &[AppConfig]) -> Vec<NormalizedApp>
 
             if matched {
                 Some(NormalizedApp {
-                    name: app.name.clone(),
+                    name: app.get_name(),
                     icon: app.get_icon(),
                 })
             } else {
@@ -478,8 +529,11 @@ fn get_shortcuts() -> Vec<NormalizedShortcut> {
 
     config
         .into_iter()
+        // 現在のプラットフォームで有効なアプリのみ
+        .filter(|app| app.is_available())
         .flat_map(|app| {
-            let app_name = app.name.clone();
+            let app_name = app.get_name();
+            let app_icon = app.get_icon();
             app.keybindings.into_iter().filter_map(move |kb| {
                 // プラットフォームに応じたキーを取得
                 let key = kb.key.get_key(is_macos)?;
@@ -489,6 +543,7 @@ fn get_shortcuts() -> Vec<NormalizedShortcut> {
                 }
                 Some(NormalizedShortcut {
                     app: app_name.clone(),
+                    icon: app_icon.clone(),
                     action: kb.action,
                     key,
                     tags: kb.tags,

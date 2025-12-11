@@ -93,9 +93,6 @@ let activeWindowInfo: ActiveWindowInfo | null = null;
 let matchedApps: NormalizedApp[] = [];
 let shortcuts: Shortcut[] = [];
 
-// デフォルトアイコン
-const DEFAULT_APP_ICON = "📌";
-
 // システムテーマを取得（同期的にCSSメディアクエリを使用）
 function getSystemTheme(): "light" | "dark" {
 	return window.matchMedia("(prefers-color-scheme: dark)").matches
@@ -161,14 +158,6 @@ async function loadThemeSetting(): Promise<void> {
 	applyTheme();
 }
 
-// アプリ名からアイコンを取得
-function getAppIcon(appName: string): string {
-	const matchedApp = matchedApps.find(
-		(app) => app.name.toLowerCase() === appName.toLowerCase(),
-	);
-	return matchedApp?.icon ?? DEFAULT_APP_ICON;
-}
-
 // 初期化
 async function init(): Promise<void> {
 	// テーマを初期化
@@ -207,6 +196,13 @@ async function init(): Promise<void> {
 			// ウィンドウ表示時にテーマを再適用（システム設定が変わっている可能性があるため）
 			if (currentThemeSetting === "system") {
 				applyTheme();
+			}
+
+			// ショートカットデータを再読み込み（設定ファイルが変更されている可能性があるため）
+			try {
+				shortcuts = await invoke<Shortcut[]>("get_shortcuts");
+			} catch (_e) {
+				console.log("Failed to reload shortcuts");
 			}
 
 			// バックエンドでアプリをマッチング
@@ -297,28 +293,47 @@ function filterAndDisplay(): void {
 	displayResults();
 }
 
-// テキストでフィルタリング
+// OS名を取得
+function getOsName(): string {
+	return currentPlatform === "mac" ? "macOS" : "Windows";
+}
+
+// テキストでフィルタリングとソート
 function filterByText(): void {
 	const query = searchInput.value.toLowerCase().trim();
 
 	// 検出アプリ名のリストを取得（name で比較）
 	const detectedAppNames = matchedApps.map((app) => app.name.toLowerCase());
+	const osName = getOsName().toLowerCase();
 
-	filteredShortcuts = shortcuts.filter((shortcut) => {
-		// アプリ名フィルタ: 検出アプリと一致するもののみ
-		const isMatchedApp = detectedAppNames.includes(shortcut.app.toLowerCase());
+	// まずタグでフィルタリング（クエリがある場合）
+	let filtered = shortcuts;
+	if (query) {
+		filtered = shortcuts.filter((shortcut) =>
+			shortcut.tags.some((tag) => tag.toLowerCase().includes(query)),
+		);
+	}
 
-		if (!isMatchedApp) {
-			return false;
-		}
+	// 優先度でソート: 1. 検出アプリ, 2. OS, 3. その他
+	filteredShortcuts = filtered.sort((a, b) => {
+		const aApp = a.app.toLowerCase();
+		const bApp = b.app.toLowerCase();
 
-		// 検索クエリがない場合はアプリフィルタのみ適用
-		if (!query) {
-			return true;
-		}
+		const aIsDetected = detectedAppNames.includes(aApp);
+		const bIsDetected = detectedAppNames.includes(bApp);
+		const aIsOs = aApp === osName;
+		const bIsOs = bApp === osName;
 
-		// タグの部分一致検索
-		return shortcut.tags.some((tag) => tag.toLowerCase().includes(query));
+		// 検出アプリを最優先
+		if (aIsDetected && !bIsDetected) return -1;
+		if (!aIsDetected && bIsDetected) return 1;
+
+		// 次にOS
+		if (aIsOs && !bIsOs) return -1;
+		if (!aIsOs && bIsOs) return 1;
+
+		// 同じカテゴリ内ではアプリ名でソート
+		return aApp.localeCompare(bApp);
 	});
 }
 
@@ -353,7 +368,7 @@ function createResultItem(shortcut: Shortcut, index: number): HTMLDivElement {
 	if (index === selectedIndex) item.classList.add("selected");
 	item.dataset.index = String(index);
 
-	const icon = getAppIcon(shortcut.app);
+	const icon = shortcut.icon;
 	const displayKey = shortcut.key;
 	const appLabel = shortcut.app;
 

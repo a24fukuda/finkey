@@ -191,5 +191,122 @@
     "name": "コマンドプロンプト",
     "bind": ["cmd", "コマンド プロンプト"],
     "keybindings": []
+  },
+  {
+    "icon": "🪟",
+    "os": "windows",
+    "keybindings": [
+      {
+        "action": "エクスプローラーを開く",
+        "key": "Win + E",
+        "tags": ["エクスプローラー", "explorer", "ファイル", "ekusupuroora"]
+      },
+      {
+        "action": "デスクトップを表示",
+        "key": "Win + D",
+        "tags": ["デスクトップ", "desktop", "desukutoppu"]
+      },
+      {
+        "action": "設定を開く",
+        "key": "Win + I",
+        "tags": ["設定", "settings", "settei"]
+      },
+      {
+        "action": "ロック",
+        "key": "Win + L",
+        "tags": ["ロック", "lock", "rokku"]
+      },
+      {
+        "action": "スクリーンショット",
+        "key": "Win + Shift + S",
+        "tags": ["スクリーンショット", "screenshot", "キャプチャ", "sukuriinsyotto"]
+      },
+      {
+        "action": "タスクビュー",
+        "key": "Win + Tab",
+        "tags": ["タスク", "task", "ビュー", "view", "tasuku"]
+      },
+      {
+        "action": "仮想デスクトップ作成",
+        "key": "Win + Ctrl + D",
+        "tags": ["仮想デスクトップ", "virtual desktop", "kasou"]
+      },
+      {
+        "action": "ウィンドウを最大化",
+        "key": "Win + ↑",
+        "tags": ["最大化", "maximize", "saidaika"]
+      },
+      {
+        "action": "ウィンドウを最小化",
+        "key": "Win + ↓",
+        "tags": ["最小化", "minimize", "saisyouka"]
+      },
+      {
+        "action": "ウィンドウを左半分に配置",
+        "key": "Win + ←",
+        "tags": ["スナップ", "snap", "左", "left", "hidari"]
+      },
+      {
+        "action": "ウィンドウを右半分に配置",
+        "key": "Win + →",
+        "tags": ["スナップ", "snap", "右", "right", "migi"]
+      },
+      {
+        "action": "クリップボード履歴",
+        "key": "Win + V",
+        "tags": ["クリップボード", "clipboard", "履歴", "kurippuboodo"]
+      },
+      {
+        "action": "絵文字パネル",
+        "key": "Win + .",
+        "tags": ["絵文字", "emoji", "emozi"]
+      }
+    ]
+  },
+  {
+    "icon": "🍎",
+    "os": "macos",
+    "keybindings": [
+      {
+        "action": "Spotlight検索",
+        "key": "⌘ + Space",
+        "tags": ["検索", "search", "spotlight", "kensaku"]
+      },
+      {
+        "action": "スクリーンショット（全画面）",
+        "key": "⌘ + Shift + 3",
+        "tags": ["スクリーンショット", "screenshot", "キャプチャ", "sukuriinsyotto"]
+      },
+      {
+        "action": "スクリーンショット（選択範囲）",
+        "key": "⌘ + Shift + 4",
+        "tags": ["スクリーンショット", "screenshot", "キャプチャ", "範囲", "sukuriinsyotto"]
+      },
+      {
+        "action": "Mission Control",
+        "key": "Ctrl + ↑",
+        "tags": ["ミッションコントロール", "mission control", "missyon"]
+      },
+      {
+        "action": "アプリケーション切り替え",
+        "key": "⌘ + Tab",
+        "tags": ["アプリ", "切り替え", "switch", "app", "kirikae"]
+      },
+      {
+        "action": "Finderを開く",
+        "key": "⌘ + Option + Space",
+        "tags": ["Finder", "ファイル", "fainda"]
+      },
+      {
+        "action": "強制終了ダイアログ",
+        "key": "⌘ + Option + Esc",
+        "tags": ["強制終了", "force quit", "kyouseisyuuryou"]
+      },
+      {
+        "action": "ロック",
+        "key": "Ctrl + ⌘ + Q",
+        "tags": ["ロック", "lock", "rokku"]
+      }
+    ]
   }
 ]
