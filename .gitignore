@@ -237,4 +237,4 @@ $RECYCLE.BIN/
 .claude/settings.local.json
 
 # Build output (TypeScript -> JavaScript)
-src/app.js
+src/**/*.js
