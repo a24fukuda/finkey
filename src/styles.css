@@ -361,10 +361,6 @@ body {
 	display: block;
 }
 
-.result-count {
-	color: var(--text-secondary);
-}
-
 /* ハイライト */
 .highlight {
 	background: rgba(10, 132, 255, 0.3);

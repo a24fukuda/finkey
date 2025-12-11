@@ -7,7 +7,7 @@ use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Mutex;
 use std::thread;
-use std::time::Duration;
+use std::time::{Duration, SystemTime};
 use tauri::{
     AppHandle, CustomMenuItem, GlobalShortcutManager, Manager, SystemTray, SystemTrayEvent,
     SystemTrayMenu, SystemTrayMenuItem, WindowEvent,
@@ -191,10 +191,30 @@ impl Default for ThemeSetting {
 }
 
 // アプリ設定（settings.json）
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AppSettings {
     #[serde(default)]
     pub theme: ThemeSetting,
+    /// アプリ起動のホットキー（例: "Ctrl+Shift+K"）
+    #[serde(default = "default_hotkey")]
+    pub hotkey: String,
+}
+
+fn default_hotkey() -> String {
+    if cfg!(target_os = "macos") {
+        "Command+Shift+K".to_string()
+    } else {
+        "Ctrl+Shift+K".to_string()
+    }
+}
+
+impl Default for AppSettings {
+    fn default() -> Self {
+        Self {
+            theme: ThemeSetting::default(),
+            hotkey: default_hotkey(),
+        }
+    }
 }
 
 // デフォルトのキーバインド設定（JSONファイルから読み込み）
@@ -220,20 +240,49 @@ fn get_settings_path() -> Option<PathBuf> {
     Some(get_config_dir()?.join("settings.json"))
 }
 
-// アプリ設定を読み込む（ファイルがなければ作成）
+// アプリ設定を読み込む（キャッシュ付き）
 fn load_settings() -> AppSettings {
-    if let Some(path) = get_settings_path() {
-        if path.exists() {
-            if let Ok(content) = fs::read_to_string(&path) {
-                if let Ok(settings) = serde_json::from_str::<AppSettings>(&content) {
-                    return settings;
-                }
+    let path = match get_settings_path() {
+        Some(p) => p,
+        None => return AppSettings::default(),
+    };
+
+    let current_modified = get_file_modified_time(&path);
+
+    // キャッシュをチェック
+    if let Ok(cache_guard) = SETTINGS_CACHE.lock() {
+        if let Some(ref cache) = *cache_guard {
+            // タイムスタンプが同じならキャッシュを返す
+            if cache.last_modified == current_modified && current_modified.is_some() {
+                return cache.data.clone();
             }
         }
     }
-    // ファイルがなければデフォルト設定を作成して保存
-    let settings = AppSettings::default();
-    let _ = save_settings(&settings);
+
+    // ファイルを読み込む
+    let settings = if path.exists() {
+        fs::read_to_string(&path)
+            .ok()
+            .and_then(|content| serde_json::from_str::<AppSettings>(&content).ok())
+            .unwrap_or_else(|| {
+                let default = AppSettings::default();
+                let _ = save_settings(&default);
+                default
+            })
+    } else {
+        let default = AppSettings::default();
+        let _ = save_settings(&default);
+        default
+    };
+
+    // キャッシュを更新
+    if let Ok(mut cache_guard) = SETTINGS_CACHE.lock() {
+        *cache_guard = Some(SettingsCache {
+            data: settings.clone(),
+            last_modified: get_file_modified_time(&path),
+        });
+    }
+
     settings
 }
 
@@ -249,23 +298,68 @@ fn save_settings(settings: &AppSettings) -> Result<(), String> {
     let json = serde_json::to_string_pretty(settings).map_err(|e| format!("JSON変換エラー: {e}"))?;
     fs::write(&path, json).map_err(|e| format!("ファイル書き込みエラー: {e}"))?;
 
+    // キャッシュを更新
+    if let Ok(mut cache_guard) = SETTINGS_CACHE.lock() {
+        *cache_guard = Some(SettingsCache {
+            data: settings.clone(),
+            last_modified: get_file_modified_time(&path),
+        });
+    }
+
     Ok(())
 }
 
-// キーバインド設定を読み込む
+/// ファイルの最終更新時刻を取得
+fn get_file_modified_time(path: &PathBuf) -> Option<SystemTime> {
+    fs::metadata(path).ok()?.modified().ok()
+}
+
+// キーバインド設定を読み込む（キャッシュ付き）
 fn load_keybindings_config() -> Vec<AppConfig> {
-    if let Some(path) = get_keybindings_config_path() {
-        if path.exists() {
-            if let Ok(content) = fs::read_to_string(&path) {
-                if let Ok(config) = serde_json::from_str::<Vec<AppConfig>>(&content) {
-                    return config;
-                }
+    let path = match get_keybindings_config_path() {
+        Some(p) => p,
+        None => {
+            let config = get_default_keybindings();
+            return config;
+        }
+    };
+
+    let current_modified = get_file_modified_time(&path);
+
+    // キャッシュをチェック
+    if let Ok(cache_guard) = KEYBINDINGS_CACHE.lock() {
+        if let Some(ref cache) = *cache_guard {
+            // タイムスタンプが同じならキャッシュを返す
+            if cache.last_modified == current_modified && current_modified.is_some() {
+                return cache.data.clone();
             }
         }
     }
-    // ファイルがなければデフォルトを返し、設定ファイルを作成
-    let config = get_default_keybindings();
-    let _ = save_keybindings_config(&config);
+
+    // ファイルを読み込む
+    let config = if path.exists() {
+        fs::read_to_string(&path)
+            .ok()
+            .and_then(|content| serde_json::from_str::<Vec<AppConfig>>(&content).ok())
+            .unwrap_or_else(|| {
+                let default = get_default_keybindings();
+                let _ = save_keybindings_config(&default);
+                default
+            })
+    } else {
+        let default = get_default_keybindings();
+        let _ = save_keybindings_config(&default);
+        default
+    };
+
+    // キャッシュを更新
+    if let Ok(mut cache_guard) = KEYBINDINGS_CACHE.lock() {
+        *cache_guard = Some(KeybindingsCache {
+            data: config.clone(),
+            last_modified: get_file_modified_time(&path),
+        });
+    }
+
     config
 }
 
@@ -283,6 +377,21 @@ fn save_keybindings_config(config: &Vec<AppConfig>) -> Result<(), String> {
 
     Ok(())
 }
+
+// キャッシュ用の構造体
+struct KeybindingsCache {
+    data: Vec<AppConfig>,
+    last_modified: Option<SystemTime>,
+}
+
+struct SettingsCache {
+    data: AppSettings,
+    last_modified: Option<SystemTime>,
+}
+
+// キャッシュ
+static KEYBINDINGS_CACHE: Mutex<Option<KeybindingsCache>> = Mutex::new(None);
+static SETTINGS_CACHE: Mutex<Option<SettingsCache>> = Mutex::new(None);
 
 // 前回アクティブだったアプリ情報を保持
 static LAST_ACTIVE_APP: Mutex<Option<ActiveWindowInfo>> = Mutex::new(None);
@@ -591,6 +700,44 @@ fn open_config_file() -> Result<(), String> {
     Ok(())
 }
 
+// settings.jsonファイルを開くコマンド
+#[tauri::command]
+fn open_settings_file() -> Result<(), String> {
+    let path = get_settings_path().ok_or("設定ファイルのパスが見つかりません")?;
+
+    // ファイルが存在しない場合は作成
+    if !path.exists() {
+        let settings = AppSettings::default();
+        save_settings(&settings)?;
+    }
+
+    #[cfg(target_os = "windows")]
+    {
+        std::process::Command::new("cmd")
+            .args(["/c", "start", "", path.to_string_lossy().as_ref()])
+            .spawn()
+            .map_err(|e| format!("ファイルを開けませんでした: {e}"))?;
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        std::process::Command::new("open")
+            .arg(&path)
+            .spawn()
+            .map_err(|e| format!("ファイルを開けませんでした: {e}"))?;
+    }
+
+    #[cfg(target_os = "linux")]
+    {
+        std::process::Command::new("xdg-open")
+            .arg(&path)
+            .spawn()
+            .map_err(|e| format!("ファイルを開けませんでした: {e}"))?;
+    }
+
+    Ok(())
+}
+
 // テーマ設定を取得
 #[tauri::command]
 fn get_theme_setting() -> String {
@@ -665,19 +812,19 @@ fn main() {
             // バックグラウンドでアクティブウィンドウを監視開始
             start_active_window_monitor();
 
-            // グローバルショートカットを登録
-            // Mac: Cmd+Shift+K, Windows/Linux: Ctrl+Shift+K
-            let shortcut = if cfg!(target_os = "macos") {
-                "Command+Shift+K"
-            } else {
-                "Ctrl+Shift+K"
-            };
+            // 設定からホットキーを読み込み
+            let settings = load_settings();
+            let hotkey = settings.hotkey;
 
+            // グローバルホットキーを登録
             let app_handle_clone = app_handle.clone();
-            if let Err(e) = app.global_shortcut_manager().register(shortcut, move || {
-                toggle_window(&app_handle_clone);
-            }) {
-                eprintln!("Warning: Failed to register global shortcut ({shortcut}): {e:?}");
+            if let Err(e) = app
+                .global_shortcut_manager()
+                .register(&hotkey, move || {
+                    toggle_window(&app_handle_clone);
+                })
+            {
+                eprintln!("Warning: Failed to register global hotkey ({hotkey}): {e:?}");
             }
 
             // Escキーでウィンドウを閉じる
@@ -731,6 +878,7 @@ fn main() {
             get_shortcuts,
             get_config_file_path,
             open_config_file,
+            open_settings_file,
             get_theme_setting,
             set_theme_setting,
             get_system_theme

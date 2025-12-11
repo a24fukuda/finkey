@@ -73,9 +73,11 @@ const activeAppNameEl = document.getElementById(
 const searchInput = document.getElementById("search-input") as HTMLInputElement;
 const resultsList = document.getElementById("results-list") as HTMLElement;
 const noResults = document.getElementById("no-results") as HTMLElement;
-const resultCount = document.getElementById("result-count") as HTMLElement;
 const openConfigBtn = document.getElementById(
 	"open-config-btn",
+) as HTMLButtonElement;
+const openSettingsBtn = document.getElementById(
+	"open-settings-btn",
 ) as HTMLButtonElement;
 const themeToggleBtn = document.getElementById(
 	"theme-toggle",
@@ -186,6 +188,7 @@ async function init(): Promise<void> {
 	searchInput.addEventListener("input", handleTextSearch);
 	searchInput.addEventListener("keydown", handleKeydown);
 	openConfigBtn.addEventListener("click", openConfigFile);
+	openSettingsBtn.addEventListener("click", openSettingsFile);
 	themeToggleBtn.addEventListener("click", toggleTheme);
 
 	// Tauriイベントリスナー（アクティブウィンドウ情報を受け取る）
@@ -287,6 +290,15 @@ async function openConfigFile(): Promise<void> {
 	}
 }
 
+// アプリ設定ファイルを開く
+async function openSettingsFile(): Promise<void> {
+	try {
+		await invoke("open_settings_file");
+	} catch (e) {
+		console.log("Failed to open settings file:", e);
+	}
+}
+
 // フィルタリングと表示
 function filterAndDisplay(): void {
 	filterByText();
@@ -343,12 +355,10 @@ function displayResults(): void {
 
 	if (filteredShortcuts.length === 0) {
 		noResults.style.display = "block";
-		resultCount.textContent = "";
 		return;
 	}
 
 	noResults.style.display = "none";
-	resultCount.textContent = `${filteredShortcuts.length}件`;
 
 	const fragment = document.createDocumentFragment();
 
