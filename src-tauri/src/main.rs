@@ -198,6 +198,9 @@ pub struct AppSettings {
     /// アプリ起動のホットキー（例: "Ctrl+Shift+K"）
     #[serde(default = "default_hotkey")]
     pub hotkey: String,
+    /// オーバーレイ表示時間（秒）
+    #[serde(default = "default_overlay_duration")]
+    pub overlay_duration: u32,
 }
 
 fn default_hotkey() -> String {
@@ -208,11 +211,16 @@ fn default_hotkey() -> String {
     }
 }
 
+fn default_overlay_duration() -> u32 {
+    5
+}
+
 impl Default for AppSettings {
     fn default() -> Self {
         Self {
             theme: ThemeSetting::default(),
             hotkey: default_hotkey(),
+            overlay_duration: default_overlay_duration(),
         }
     }
 }
@@ -395,12 +403,15 @@ static SETTINGS_CACHE: Mutex<Option<SettingsCache>> = Mutex::new(None);
 
 // 前回アクティブだったアプリ情報を保持
 static LAST_ACTIVE_APP: Mutex<Option<ActiveWindowInfo>> = Mutex::new(None);
+// 前回アクティブだったウィンドウのHWND（Windows用）
+#[cfg(target_os = "windows")]
+static LAST_ACTIVE_HWND: Mutex<Option<isize>> = Mutex::new(None);
 // ウィンドウが表示中かどうか
 static WINDOW_VISIBLE: AtomicBool = AtomicBool::new(false);
 
 #[cfg(target_os = "windows")]
 mod active_window {
-    use super::ActiveWindowInfo;
+    use super::{ActiveWindowInfo, LAST_ACTIVE_HWND};
     use windows::Win32::Foundation::HWND;
     use windows::Win32::System::ProcessStatus::GetModuleBaseNameW;
     use windows::Win32::System::Threading::{
@@ -408,6 +419,7 @@ mod active_window {
     };
     use windows::Win32::UI::WindowsAndMessaging::{
         GetForegroundWindow, GetWindowTextLengthW, GetWindowTextW, GetWindowThreadProcessId,
+        SetForegroundWindow,
     };
 
     /// アクティブなウィンドウの情報を取得（自分自身を除外）
@@ -431,6 +443,11 @@ mod active_window {
             let current_pid = GetCurrentProcessId();
             if process_id == current_pid {
                 return None;
+            }
+
+            // HWNDを保存
+            if let Ok(mut last_hwnd) = LAST_ACTIVE_HWND.lock() {
+                *last_hwnd = Some(hwnd.0 as isize);
             }
 
             // プロセス名を取得
@@ -480,6 +497,19 @@ mod active_window {
             })
         }
     }
+
+    /// 保存されたHWNDのウィンドウにフォーカスを戻す
+    #[allow(unsafe_code)]
+    pub fn restore_focus_to_last_window() {
+        if let Ok(last_hwnd) = LAST_ACTIVE_HWND.lock() {
+            if let Some(hwnd_val) = *last_hwnd {
+                unsafe {
+                    let hwnd = HWND(hwnd_val as *mut std::ffi::c_void);
+                    let _ = SetForegroundWindow(hwnd);
+                }
+            }
+        }
+    }
 }
 
 #[cfg(target_os = "macos")]
@@ -489,6 +519,8 @@ mod active_window {
     pub fn get_active_window_info() -> Option<ActiveWindowInfo> {
         None
     }
+    /// macOS: ダミー実装
+    pub fn restore_focus_to_last_window() {}
 }
 
 #[cfg(not(any(target_os = "windows", target_os = "macos")))]
@@ -498,6 +530,8 @@ mod active_window {
     pub fn get_active_window_info() -> Option<ActiveWindowInfo> {
         None
     }
+    /// その他のOS: ダミー実装
+    pub fn restore_focus_to_last_window() {}
 }
 
 // 前回のアクティブアプリを更新する
@@ -771,6 +805,170 @@ fn get_system_theme(window: tauri::Window) -> String {
     }
 }
 
+// オーバーレイ表示時間を取得
+#[tauri::command]
+fn get_overlay_duration() -> u32 {
+    load_settings().overlay_duration
+}
+
+// オーバーレイ表示用のペイロード
+#[derive(Clone, Serialize)]
+struct OverlayPayload {
+    shortcut_key: String,
+    duration: u32,
+}
+
+/// オーバーレイウィンドウの幅を計算
+fn calculate_overlay_width(shortcut_key: &str) -> f64 {
+    const BASE_WIDTH: f64 = 150.0;
+    const MODIFIER_WIDTH: f64 = 50.0;
+    const SEPARATOR_WIDTH: f64 = 20.0;
+    const DEFAULT_KEY_WIDTH: f64 = 30.0;
+    const MIN_WIDTH: f64 = 200.0;
+    const MAX_WIDTH: f64 = 500.0;
+
+    let key_lower = shortcut_key.to_lowercase();
+    let mut width = BASE_WIDTH;
+
+    // 修飾キーの幅を加算
+    if key_lower.contains("ctrl") || key_lower.contains("control") {
+        width += MODIFIER_WIDTH;
+    }
+    if key_lower.contains("shift") {
+        width += MODIFIER_WIDTH;
+    }
+    if key_lower.contains("alt") || key_lower.contains("option") {
+        width += MODIFIER_WIDTH;
+    }
+    if key_lower.contains("win")
+        || key_lower.contains("command")
+        || key_lower.contains("cmd")
+        || shortcut_key.contains('⌘')
+    {
+        width += MODIFIER_WIDTH;
+    }
+
+    // 区切り文字の幅を加算
+    let separator_count = shortcut_key.matches('+').count();
+    width += (separator_count as f64) * SEPARATOR_WIDTH;
+
+    // 想定外のキーがある場合のデフォルト幅を加算
+    // （修飾キー以外の部分、例: "K", "F12", "↑" など）
+    width += DEFAULT_KEY_WIDTH;
+
+    // 最小・最大幅でクランプ
+    width.clamp(MIN_WIDTH, MAX_WIDTH)
+}
+
+/// Windowsでフォーカスを奪わずにウィンドウを表示
+#[cfg(target_os = "windows")]
+fn show_window_no_focus(window: &tauri::Window) {
+    use windows::Win32::UI::WindowsAndMessaging::{
+        ShowWindow, SetWindowPos, HWND_TOPMOST, SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOSIZE,
+        SW_SHOWNOACTIVATE,
+    };
+
+    // HWNDを取得
+    if let Ok(hwnd) = window.hwnd() {
+        let hwnd = windows::Win32::Foundation::HWND(hwnd.0 as _);
+
+        // SAFETY: Windows APIの呼び出し
+        unsafe {
+            // SW_SHOWNOACTIVATEでフォーカスを奪わずに表示
+            let _ = ShowWindow(hwnd, SW_SHOWNOACTIVATE);
+
+            // 常に最前面に配置（フォーカスは奪わない）
+            let _ = SetWindowPos(
+                hwnd,
+                HWND_TOPMOST,
+                0,
+                0,
+                0,
+                0,
+                SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZE,
+            );
+        }
+    }
+}
+
+#[cfg(not(target_os = "windows"))]
+fn show_window_no_focus(window: &tauri::Window) {
+    let _ = window.show();
+}
+
+// オーバーレイウィンドウを表示
+#[tauri::command]
+fn show_overlay(app: AppHandle, shortcut_key: String) -> Result<(), String> {
+    let settings = load_settings();
+    let duration = settings.overlay_duration;
+
+    // メインウィンドウを非表示
+    if let Some(main_window) = app.get_window("main") {
+        WINDOW_VISIBLE.store(false, Ordering::SeqCst);
+        let _ = main_window.hide();
+    }
+
+    // オーバーレイウィンドウを表示（フォーカスは設定しない）
+    if let Some(overlay_window) = app.get_window("overlay") {
+        // ウィンドウ幅を計算して設定
+        let width = calculate_overlay_width(&shortcut_key);
+        let _ = overlay_window.set_size(tauri::Size::Logical(tauri::LogicalSize {
+            width,
+            height: 150.0,
+        }));
+
+        let _ = overlay_window.center();
+
+        // フォーカスを奪わずに表示
+        show_window_no_focus(&overlay_window);
+
+        // 元のアプリにフォーカスを戻す
+        active_window::restore_focus_to_last_window();
+
+        // オーバーレイにデータを送信
+        let _ = overlay_window.emit(
+            "overlay-show",
+            OverlayPayload {
+                shortcut_key,
+                duration,
+            },
+        );
+
+        // Rust側でタイマーを管理（フォーカスがなくてもタイマーが動作するように）
+        let app_handle = app.clone();
+        thread::spawn(move || {
+            thread::sleep(Duration::from_secs(duration as u64));
+            if let Some(overlay) = app_handle.get_window("overlay") {
+                // Windows API で直接非表示にする（Tauriのhide()が効かない場合の対策）
+                #[cfg(target_os = "windows")]
+                {
+                    if let Ok(hwnd) = overlay.hwnd() {
+                        use windows::Win32::UI::WindowsAndMessaging::{ShowWindow, SW_HIDE};
+                        unsafe {
+                            let hwnd = windows::Win32::Foundation::HWND(hwnd.0 as _);
+                            let _ = ShowWindow(hwnd, SW_HIDE);
+                        }
+                    }
+                }
+                #[cfg(not(target_os = "windows"))]
+                {
+                    let _ = overlay.hide();
+                }
+            }
+        });
+    }
+
+    Ok(())
+}
+
+// オーバーレイウィンドウを非表示
+#[tauri::command]
+fn hide_overlay(app: AppHandle) {
+    if let Some(overlay_window) = app.get_window("overlay") {
+        let _ = overlay_window.hide();
+    }
+}
+
 fn create_system_tray() -> SystemTray {
     let show = CustomMenuItem::new("show".to_string(), "ウィンドウを表示");
     let config = CustomMenuItem::new("config".to_string(), "設定を開く");
@@ -853,6 +1051,11 @@ fn main() {
             Ok(())
         })
         .on_window_event(|event| {
+            // メインウィンドウのみ処理（オーバーレイウィンドウは除外）
+            if event.window().label() != "main" {
+                return;
+            }
+
             match event.event() {
                 // フォーカスを失ったらウィンドウを非表示
                 WindowEvent::Focused(focused) => {
@@ -881,7 +1084,10 @@ fn main() {
             open_settings_file,
             get_theme_setting,
             set_theme_setting,
-            get_system_theme
+            get_system_theme,
+            get_overlay_duration,
+            show_overlay,
+            hide_overlay
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

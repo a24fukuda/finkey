@@ -63,6 +63,7 @@
     },
     "windows": [
       {
+        "label": "main",
         "fullscreen": false,
         "resizable": false,
         "title": "Shortcut Finder",
@@ -75,6 +76,22 @@
         "skipTaskbar": true,
         "visible": false,
         "focus": true
+      },
+      {
+        "label": "overlay",
+        "url": "overlay.html",
+        "fullscreen": false,
+        "resizable": false,
+        "title": "Shortcut Overlay",
+        "width": 400,
+        "height": 150,
+        "center": true,
+        "decorations": false,
+        "transparent": true,
+        "alwaysOnTop": true,
+        "skipTaskbar": true,
+        "visible": false,
+        "focus": false
       }
     ]
   }

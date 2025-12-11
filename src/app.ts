@@ -265,10 +265,28 @@ async function handleKeydown(e: KeyboardEvent): Promise<void> {
 				scrollToSelected();
 			}
 			break;
+		case "Enter":
+			e.preventDefault();
+			selectShortcut();
+			break;
 		case "Escape":
 			e.preventDefault();
 			hideWindow();
 			break;
+	}
+}
+
+// 選択したショートカットをオーバーレイ表示
+async function selectShortcut(): Promise<void> {
+	if (filteredShortcuts.length === 0 || selectedIndex < 0) {
+		return;
+	}
+
+	const shortcut = filteredShortcuts[selectedIndex];
+	try {
+		await invoke("show_overlay", { shortcutKey: shortcut.key });
+	} catch (e) {
+		console.log("Failed to show overlay:", e);
 	}
 }
 
@@ -400,6 +418,7 @@ function createResultItem(shortcut: Shortcut, index: number): HTMLDivElement {
 	item.addEventListener("click", () => {
 		selectedIndex = index;
 		updateSelection();
+		selectShortcut();
 	});
 
 	return item;
