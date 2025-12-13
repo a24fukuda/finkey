@@ -30,10 +30,13 @@ export type TauriCommand =
 	| "get_shortcuts"
 	| "get_matched_apps"
 	| "hide_main_window"
-	| "open_config_file";
+	| "open_config_file"
+	| "open_settings_file"
+	| "get_theme_setting"
+	| "set_theme_setting"
+	| "get_system_theme"
+	| "show_overlay"
+	| "hide_overlay";
 
 /** Tauri イベント名 */
-export type TauriEvent = "window-shown" | "window-hidden";
-
-/** window-shown イベントのペイロード */
-export interface WindowShownPayload extends ActiveWindowInfo {}
+export type TauriEvent = "window-shown" | "window-hidden" | "overlay-show";

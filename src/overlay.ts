@@ -1,36 +1,4 @@
-// Tauri API
-interface TauriGlobal {
-	tauri?: {
-		invoke: <T>(cmd: string, args?: Record<string, unknown>) => Promise<T>;
-	};
-	invoke?: <T>(cmd: string, args?: Record<string, unknown>) => Promise<T>;
-	event?: {
-		listen: <T>(
-			event: string,
-			handler: (event: { payload: T }) => void,
-		) => Promise<() => void>;
-	};
-}
-
-interface Window {
-	__TAURI__?: TauriGlobal;
-}
-
-const invoke =
-	window.__TAURI__?.tauri?.invoke ??
-	window.__TAURI__?.invoke ??
-	(async <T>(): Promise<T> => {
-		throw new Error("Tauri not available");
-	});
-
-const listen =
-	window.__TAURI__?.event?.listen ??
-	(async <T>(
-		_event: string,
-		_handler: (event: { payload: T }) => void,
-	): Promise<() => void> => {
-		return () => {};
-	});
+import { invoke, listen } from "./tauri-api";
 
 // DOM要素
 const shortcutKeyEl = document.getElementById("shortcut-key") as HTMLElement;

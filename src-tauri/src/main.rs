@@ -73,7 +73,7 @@ pub struct Keybinding {
 }
 
 // OS種別（windows または macos のみ）
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
 pub enum OsType {
     Windows,
@@ -176,18 +176,13 @@ pub struct ActiveWindowInfo {
 }
 
 // テーマ設定
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
 pub enum ThemeSetting {
+    #[default]
     System,
     Light,
     Dark,
-}
-
-impl Default for ThemeSetting {
-    fn default() -> Self {
-        Self::System
-    }
 }
 
 // アプリ設定（settings.json）
@@ -414,6 +409,7 @@ mod active_window {
     use super::{ActiveWindowInfo, LAST_ACTIVE_HWND};
     use windows::Win32::Foundation::HWND;
     use windows::Win32::System::ProcessStatus::GetModuleBaseNameW;
+    use windows::Win32::Foundation::CloseHandle;
     use windows::Win32::System::Threading::{
         GetCurrentProcessId, OpenProcess, PROCESS_QUERY_INFORMATION, PROCESS_VM_READ,
     };
@@ -462,7 +458,7 @@ mod active_window {
                 process_handle.and_then(|handle| {
                     let mut buffer = [0u16; 260];
                     let len = GetModuleBaseNameW(handle, None, &mut buffer);
-                    if len == 0 {
+                    let result = if len == 0 {
                         None
                     } else {
                         let name = String::from_utf16_lossy(&buffer[..len as usize]);
@@ -471,7 +467,10 @@ mod active_window {
                                 .trim_end_matches(".EXE")
                                 .to_string(),
                         )
-                    }
+                    };
+                    // プロセスハンドルを閉じる
+                    let _ = CloseHandle(handle);
+                    result
                 })
             };
 
@@ -610,12 +609,6 @@ fn get_platform() -> String {
     }
 }
 
-// アクティブなウィンドウ情報を取得するコマンド
-#[tauri::command]
-fn get_active_app() -> Option<ActiveWindowInfo> {
-    active_window::get_active_window_info()
-}
-
 /// アクティブウィンドウにマッチするアプリを検索
 /// プロセス名またはウィンドウタイトルで完全一致（大文字小文字無視）
 fn match_apps(info: &ActiveWindowInfo, apps: &[AppConfig]) -> Vec<NormalizedApp> {
@@ -696,17 +689,8 @@ fn get_shortcuts() -> Vec<NormalizedShortcut> {
         .collect()
 }
 
-// 設定ファイルのパスを取得するコマンド
-#[tauri::command]
-fn get_config_file_path() -> Option<String> {
-    get_keybindings_config_path().map(|p| p.to_string_lossy().to_string())
-}
-
-// キーバインド設定ファイルを開くコマンド
-#[tauri::command]
-fn open_config_file() -> Result<(), String> {
-    let path = get_keybindings_config_path().ok_or("設定ファイルのパスが見つかりません")?;
-
+/// ファイルをシステムのデフォルトアプリケーションで開く
+fn open_file_with_default_app(path: &std::path::Path) -> Result<(), String> {
     #[cfg(target_os = "windows")]
     {
         std::process::Command::new("cmd")
@@ -718,7 +702,7 @@ fn open_config_file() -> Result<(), String> {
     #[cfg(target_os = "macos")]
     {
         std::process::Command::new("open")
-            .arg(&path)
+            .arg(path)
             .spawn()
             .map_err(|e| format!("ファイルを開けませんでした: {e}"))?;
     }
@@ -726,12 +710,19 @@ fn open_config_file() -> Result<(), String> {
     #[cfg(target_os = "linux")]
     {
         std::process::Command::new("xdg-open")
-            .arg(&path)
+            .arg(path)
             .spawn()
             .map_err(|e| format!("ファイルを開けませんでした: {e}"))?;
     }
 
     Ok(())
+}
+
+// キーバインド設定ファイルを開くコマンド
+#[tauri::command]
+fn open_config_file() -> Result<(), String> {
+    let path = get_keybindings_config_path().ok_or("設定ファイルのパスが見つかりません")?;
+    open_file_with_default_app(&path)
 }
 
 // settings.jsonファイルを開くコマンド
@@ -745,31 +736,7 @@ fn open_settings_file() -> Result<(), String> {
         save_settings(&settings)?;
     }
 
-    #[cfg(target_os = "windows")]
-    {
-        std::process::Command::new("cmd")
-            .args(["/c", "start", "", &format!("\"{}\"", path.display())])
-            .spawn()
-            .map_err(|e| format!("ファイルを開けませんでした: {e}"))?;
-    }
-
-    #[cfg(target_os = "macos")]
-    {
-        std::process::Command::new("open")
-            .arg(&path)
-            .spawn()
-            .map_err(|e| format!("ファイルを開けませんでした: {e}"))?;
-    }
-
-    #[cfg(target_os = "linux")]
-    {
-        std::process::Command::new("xdg-open")
-            .arg(&path)
-            .spawn()
-            .map_err(|e| format!("ファイルを開けませんでした: {e}"))?;
-    }
-
-    Ok(())
+    open_file_with_default_app(&path)
 }
 
 // テーマ設定を取得
@@ -803,12 +770,6 @@ fn get_system_theme(window: tauri::Window) -> String {
         Ok(tauri::Theme::Light) => "light".to_string(),
         _ => "light".to_string(),
     }
-}
-
-// オーバーレイ表示時間を取得
-#[tauri::command]
-fn get_overlay_duration() -> u32 {
-    load_settings().overlay_duration
 }
 
 // オーバーレイ表示用のペイロード
@@ -935,10 +896,9 @@ fn show_overlay(app: AppHandle, shortcut_key: String) -> Result<(), String> {
         );
 
         // Rust側でタイマーを管理（フォーカスがなくてもタイマーが動作するように）
-        let app_handle = app.clone();
         thread::spawn(move || {
-            thread::sleep(Duration::from_secs(duration as u64));
-            if let Some(overlay) = app_handle.get_window("overlay") {
+            thread::sleep(Duration::from_secs(u64::from(duration)));
+            if let Some(overlay) = app.get_window("overlay") {
                 // Windows API で直接非表示にする（Tauriのhide()が効かない場合の対策）
                 #[cfg(target_os = "windows")]
                 {
@@ -1076,16 +1036,13 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             hide_main_window,
             get_platform,
-            get_active_app,
             get_matched_apps,
             get_shortcuts,
-            get_config_file_path,
             open_config_file,
             open_settings_file,
             get_theme_setting,
             set_theme_setting,
             get_system_theme,
-            get_overlay_duration,
             show_overlay,
             hide_overlay
         ])
