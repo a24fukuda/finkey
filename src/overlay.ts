@@ -12,6 +12,61 @@ let remainingSeconds = 0;
 interface OverlayPayload {
 	shortcut_key: string;
 	duration: number;
+	theme: string;
+}
+
+// システムテーマを取得
+function getSystemTheme(): "light" | "dark" {
+	return window.matchMedia("(prefers-color-scheme: dark)").matches
+		? "dark"
+		: "light";
+}
+
+// テーマを適用
+function applyTheme(themeSetting: string): void {
+	let effectiveTheme: "light" | "dark";
+
+	if (themeSetting === "system") {
+		effectiveTheme = getSystemTheme();
+	} else if (themeSetting === "light") {
+		effectiveTheme = "light";
+	} else {
+		effectiveTheme = "dark";
+	}
+
+	if (effectiveTheme === "light") {
+		document.documentElement.setAttribute("data-theme", "light");
+	} else {
+		document.documentElement.removeAttribute("data-theme");
+	}
+}
+
+// HTMLエスケープ
+function escapeHtml(text: string): string {
+	const div = document.createElement("div");
+	div.textContent = text;
+	return div.innerHTML;
+}
+
+// ショートカットキーをパースしてHTML要素を生成
+function formatShortcutKey(key: string): string {
+	// 順次入力キー（→）で分割
+	const sequences = key.split(" → ");
+
+	const formattedSequences = sequences.map((seq) => {
+		// 同時押しキー（+）で分割
+		const keys = seq.split(" + ");
+
+		const formattedKeys = keys.map(
+			(k) => `<kbd class="overlay-key-box">${escapeHtml(k.trim())}</kbd>`,
+		);
+
+		return formattedKeys.join('<span class="overlay-key-separator">+</span>');
+	});
+
+	return formattedSequences.join(
+		'<span class="overlay-key-separator sequence">→</span>',
+	);
 }
 
 // カウントダウン更新
@@ -63,10 +118,13 @@ async function init(): Promise<void> {
 	// Tauriイベントリスナー
 	try {
 		await listen<OverlayPayload>("overlay-show", (event) => {
-			const { shortcut_key, duration } = event.payload;
+			const { shortcut_key, duration, theme } = event.payload;
 
-			// ショートカットキーを表示
-			shortcutKeyEl.textContent = shortcut_key;
+			// テーマを適用
+			applyTheme(theme);
+
+			// ショートカットキーを表示（個別ボックス形式）
+			shortcutKeyEl.innerHTML = formatShortcutKey(shortcut_key);
 
 			// カウントダウン開始
 			startCountdown(duration);

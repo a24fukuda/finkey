@@ -166,7 +166,120 @@
     "icon": "📊",
     "name": "Excel",
     "bind": ["EXCEL", "Excel"],
-    "keybindings": []
+    "keybindings": [
+      {
+        "action": "すべての罫線",
+        "key": {
+          "windows": "Alt -> H -> B -> A",
+          "macos": "-"
+        },
+        "tags": ["罫線", "ボーダー", "border", "keisen"]
+      },
+      {
+        "action": "外枠罫線",
+        "key": {
+          "windows": "Alt -> H -> B -> S",
+          "macos": "-"
+        },
+        "tags": ["罫線", "外枠", "border", "keisen"]
+      },
+      {
+        "action": "罫線なし",
+        "key": {
+          "windows": "Alt -> H -> B -> N",
+          "macos": "-"
+        },
+        "tags": ["罫線", "削除", "border", "keisen"]
+      },
+      {
+        "action": "列幅の自動調整",
+        "key": {
+          "windows": "Alt -> H -> O -> I",
+          "macos": "-"
+        },
+        "tags": ["列幅", "自動調整", "column", "retsuhaba"]
+      },
+      {
+        "action": "行の高さの自動調整",
+        "key": {
+          "windows": "Alt -> H -> O -> A",
+          "macos": "-"
+        },
+        "tags": ["行の高さ", "自動調整", "row", "gyou"]
+      },
+      {
+        "action": "セルの書式設定",
+        "key": {
+          "windows": "Ctrl + 1",
+          "macos": "⌘ + 1"
+        },
+        "tags": ["書式", "フォーマット", "format", "syosiki"]
+      },
+      {
+        "action": "フィルター切り替え",
+        "key": {
+          "windows": "Ctrl + Shift + L",
+          "macos": "⌘ + Shift + L"
+        },
+        "tags": ["フィルター", "filter", "firutaa"]
+      },
+      {
+        "action": "テーブル作成",
+        "key": {
+          "windows": "Ctrl + T",
+          "macos": "⌘ + T"
+        },
+        "tags": ["テーブル", "table", "teeburu"]
+      },
+      {
+        "action": "行全体を選択",
+        "key": {
+          "windows": "Shift + Space",
+          "macos": "Shift + Space"
+        },
+        "tags": ["選択", "行", "row", "sentaku"]
+      },
+      {
+        "action": "列全体を選択",
+        "key": {
+          "windows": "Ctrl + Space",
+          "macos": "Ctrl + Space"
+        },
+        "tags": ["選択", "列", "column", "sentaku"]
+      },
+      {
+        "action": "セルを挿入",
+        "key": {
+          "windows": "Ctrl + Shift + +",
+          "macos": "⌘ + Shift + +"
+        },
+        "tags": ["挿入", "セル", "insert", "sounyuu"]
+      },
+      {
+        "action": "セルを削除",
+        "key": {
+          "windows": "Ctrl + -",
+          "macos": "⌘ + -"
+        },
+        "tags": ["削除", "セル", "delete", "sakujo"]
+      },
+      {
+        "action": "今日の日付を入力",
+        "key": {
+          "windows": "Ctrl + ;",
+          "macos": "Ctrl + ;"
+        },
+        "tags": ["日付", "今日", "date", "hiduke"]
+      },
+      {
+        "action": "現在時刻を入力",
+        "key": {
+          "windows": "Ctrl + :",
+          "macos": "⌘ + ;"
+        },
+        "tags": ["時刻", "time", "jikoku"]
+      }
+    ]
   },
   {
     "icon": "⬛",

@@ -214,6 +214,58 @@ body {
 	flex-shrink: 0;
 }
 
+/* ショートカットキーグループ */
+.shortcut-key-group {
+	display: inline-flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 2px;
+}
+
+/* 個別キーボックス */
+.key-box {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 24px;
+	padding: 4px 8px;
+	background: var(--bg-secondary);
+	border: 1px solid var(--border-color);
+	border-radius: 5px;
+	font-size: 11px;
+	font-weight: 600;
+	color: var(--text-primary);
+	font-family: "SF Mono", "Monaco", "Menlo", "Consolas", monospace;
+	white-space: nowrap;
+	box-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
+}
+
+.key-box.mac {
+	border-color: rgba(0, 122, 255, 0.3);
+	background: rgba(0, 122, 255, 0.1);
+	color: var(--shortcut-key-color);
+}
+
+.key-box.windows {
+	border-color: rgba(0, 120, 212, 0.3);
+	background: rgba(0, 120, 212, 0.1);
+	color: var(--shortcut-key-color);
+}
+
+/* 区切り文字 */
+.key-separator {
+	color: var(--text-muted);
+	font-size: 11px;
+	font-weight: 500;
+	padding: 0 3px;
+}
+
+.key-separator.sequence {
+	color: var(--text-secondary);
+	padding: 0 5px;
+}
+
+/* 旧スタイル（後方互換用） */
 .shortcut-key {
 	display: inline-flex;
 	align-items: center;

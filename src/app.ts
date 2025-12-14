@@ -354,6 +354,28 @@ function displayResults(): void {
 	updateSelection();
 }
 
+// ショートカットキーをパースしてHTML要素を生成
+function formatShortcutKey(key: string, platform: string): string {
+	// 順次入力キー（→）で分割
+	const sequences = key.split(" → ");
+
+	const formattedSequences = sequences.map((seq) => {
+		// 同時押しキー（+）で分割
+		// ただし " + " で分割（スペースあり形式）
+		const keys = seq.split(" + ");
+
+		const formattedKeys = keys.map(
+			(k) => `<kbd class="key-box ${platform}">${escapeHtml(k.trim())}</kbd>`,
+		);
+
+		return formattedKeys.join('<span class="key-separator">+</span>');
+	});
+
+	return formattedSequences.join(
+		'<span class="key-separator sequence">→</span>',
+	);
+}
+
 // 結果アイテム作成
 function createResultItem(shortcut: Shortcut, index: number): HTMLDivElement {
 	const item = document.createElement("div");
@@ -369,6 +391,9 @@ function createResultItem(shortcut: Shortcut, index: number): HTMLDivElement {
 	const query = searchInput.value.toLowerCase().trim();
 	const highlightedAction = highlightText(shortcut.action, query);
 
+	// ショートカットキーをフォーマット
+	const formattedKey = formatShortcutKey(displayKey, currentPlatform);
+
 	item.innerHTML = `
     <div class="result-icon">${escapeHtml(icon)}</div>
     <div class="result-content">
@@ -376,7 +401,7 @@ function createResultItem(shortcut: Shortcut, index: number): HTMLDivElement {
       <span class="result-category">${escapeHtml(appLabel)}</span>
     </div>
     <div class="result-shortcut">
-      <span class="shortcut-key ${currentPlatform}">${escapeHtml(displayKey)}</span>
+      <span class="shortcut-key-group">${formattedKey}</span>
     </div>
   `;
 

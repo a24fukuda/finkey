@@ -210,6 +210,42 @@ fn default_overlay_duration() -> u32 {
     5
 }
 
+/// ショートカットキー文字列を正規化（Tauri API用）
+/// スペースあり/なし両方の入力形式を受け付け、スペースなし形式に変換
+fn normalize_hotkey_for_tauri(key: &str) -> String {
+    // " + " → "+" に変換（スペースあり→なし）
+    key.replace(" + ", "+")
+}
+
+/// ショートカットキー文字列を正規化（表示用）
+/// スペースあり/なし両方の入力形式を受け付け、スペースあり形式に変換
+fn normalize_key_for_display(key: &str) -> String {
+    // 既にスペースありの場合はそのまま
+    if key.contains(" + ") {
+        return key.to_string();
+    }
+    // "+" → " + " に変換（スペースなし→あり）
+    // ただし "++" のような連続は考慮（Ctrl+Shift++ など）
+    let mut result = String::new();
+    let chars: Vec<char> = key.chars().collect();
+    let mut i = 0;
+    while i < chars.len() {
+        if chars[i] == '+' {
+            // 次の文字も + の場合はキー自体が + なのでスキップ
+            if i + 1 < chars.len() && chars[i + 1] == '+' {
+                result.push_str(" + +");
+                i += 2;
+                continue;
+            }
+            result.push_str(" + ");
+        } else {
+            result.push(chars[i]);
+        }
+        i += 1;
+    }
+    result
+}
+
 impl Default for AppSettings {
     fn default() -> Self {
         Self {
@@ -677,6 +713,10 @@ fn get_shortcuts() -> Vec<NormalizedShortcut> {
                 if key == "-" {
                     return None;
                 }
+                // 表示用に正規化（スペースあり形式に統一）
+                let key = normalize_key_for_display(&key);
+                // 順次入力キーの区切り文字を変換: "->" → "→"
+                let key = key.replace(" -> ", " → ");
                 Some(NormalizedShortcut {
                     app: app_name.clone(),
                     icon: app_icon.clone(),
@@ -777,6 +817,7 @@ fn get_system_theme(window: tauri::Window) -> String {
 struct OverlayPayload {
     shortcut_key: String,
     duration: u32,
+    theme: String,
 }
 
 /// オーバーレイウィンドウの幅を計算
@@ -784,38 +825,50 @@ fn calculate_overlay_width(shortcut_key: &str) -> f64 {
     const BASE_WIDTH: f64 = 150.0;
     const MODIFIER_WIDTH: f64 = 50.0;
     const SEPARATOR_WIDTH: f64 = 20.0;
+    const SEQUENCE_SEPARATOR_WIDTH: f64 = 30.0;
     const DEFAULT_KEY_WIDTH: f64 = 30.0;
     const MIN_WIDTH: f64 = 200.0;
-    const MAX_WIDTH: f64 = 500.0;
+    const MAX_WIDTH: f64 = 600.0;
 
-    let key_lower = shortcut_key.to_lowercase();
     let mut width = BASE_WIDTH;
 
-    // 修飾キーの幅を加算
-    if key_lower.contains("ctrl") || key_lower.contains("control") {
-        width += MODIFIER_WIDTH;
-    }
-    if key_lower.contains("shift") {
-        width += MODIFIER_WIDTH;
-    }
-    if key_lower.contains("alt") || key_lower.contains("option") {
-        width += MODIFIER_WIDTH;
-    }
-    if key_lower.contains("win")
-        || key_lower.contains("command")
-        || key_lower.contains("cmd")
-        || shortcut_key.contains('⌘')
-    {
-        width += MODIFIER_WIDTH;
+    // 順次入力キーの場合、各ステップを分割して計算
+    let steps: Vec<&str> = shortcut_key.split(" → ").collect();
+    let is_sequence = steps.len() > 1;
+
+    for step in &steps {
+        let step_lower = step.to_lowercase();
+
+        // 修飾キーの幅を加算（各ステップごとにカウント）
+        if step_lower.contains("ctrl") || step_lower.contains("control") {
+            width += MODIFIER_WIDTH;
+        }
+        if step_lower.contains("shift") {
+            width += MODIFIER_WIDTH;
+        }
+        if step_lower.contains("alt") || step_lower.contains("option") {
+            width += MODIFIER_WIDTH;
+        }
+        if step_lower.contains("win")
+            || step_lower.contains("command")
+            || step_lower.contains("cmd")
+            || step.contains('⌘')
+        {
+            width += MODIFIER_WIDTH;
+        }
+
+        // 同時押し区切り文字の幅を加算
+        let separator_count = step.matches('+').count();
+        width += (separator_count as f64) * SEPARATOR_WIDTH;
+
+        // キー自体の幅を加算
+        width += DEFAULT_KEY_WIDTH;
     }
 
-    // 区切り文字の幅を加算
-    let separator_count = shortcut_key.matches('+').count();
-    width += (separator_count as f64) * SEPARATOR_WIDTH;
-
-    // 想定外のキーがある場合のデフォルト幅を加算
-    // （修飾キー以外の部分、例: "K", "F12", "↑" など）
-    width += DEFAULT_KEY_WIDTH;
+    // 順次入力の区切り文字（→）の幅を加算
+    if is_sequence {
+        width += ((steps.len() - 1) as f64) * SEQUENCE_SEPARATOR_WIDTH;
+    }
 
     // 最小・最大幅でクランプ
     width.clamp(MIN_WIDTH, MAX_WIDTH)
@@ -862,6 +915,11 @@ fn show_window_no_focus(window: &tauri::Window) {
 fn show_overlay(app: AppHandle, shortcut_key: String) -> Result<(), String> {
     let settings = load_settings();
     let duration = settings.overlay_duration;
+    let theme = match settings.theme {
+        ThemeSetting::Light => "light".to_string(),
+        ThemeSetting::Dark => "dark".to_string(),
+        ThemeSetting::System => "system".to_string(),
+    };
 
     // メインウィンドウを非表示
     if let Some(main_window) = app.get_window("main") {
@@ -892,6 +950,7 @@ fn show_overlay(app: AppHandle, shortcut_key: String) -> Result<(), String> {
             OverlayPayload {
                 shortcut_key,
                 duration,
+                theme,
             },
         );
 
@@ -970,9 +1029,9 @@ fn main() {
             // バックグラウンドでアクティブウィンドウを監視開始
             start_active_window_monitor();
 
-            // 設定からホットキーを読み込み
+            // 設定からホットキーを読み込み（スペースあり/なし両方対応）
             let settings = load_settings();
-            let hotkey = settings.hotkey;
+            let hotkey = normalize_hotkey_for_tauri(&settings.hotkey);
 
             // グローバルホットキーを登録
             let app_handle_clone = app_handle.clone();

@@ -4,6 +4,32 @@
 	box-sizing: border-box;
 }
 
+/* ダークテーマ（デフォルト） */
+:root {
+	--overlay-bg: rgba(28, 28, 30, 0.5);
+	--overlay-text: #f5f5f7;
+	--overlay-key-bg: rgba(100, 181, 246, 0.15);
+	--overlay-key-border: rgba(100, 181, 246, 0.4);
+	--overlay-key-color: #64b5f6;
+	--overlay-separator: #98989d;
+	--overlay-separator-sequence: #b0b0b5;
+	--overlay-countdown: #98989d;
+	--overlay-shadow: rgba(0, 0, 0, 0.5);
+}
+
+/* ライトテーマ */
+[data-theme="light"] {
+	--overlay-bg: rgba(255, 255, 255, 0.5);
+	--overlay-text: #1c1c1e;
+	--overlay-key-bg: rgba(0, 102, 204, 0.1);
+	--overlay-key-border: rgba(0, 102, 204, 0.3);
+	--overlay-key-color: #0066cc;
+	--overlay-separator: #636366;
+	--overlay-separator-sequence: #48484a;
+	--overlay-countdown: #636366;
+	--overlay-shadow: rgba(0, 0, 0, 0.2);
+}
+
 html,
 body {
 	height: 100%;
@@ -15,7 +41,7 @@ body {
 		-apple-system, BlinkMacSystemFont, "Segoe UI", "SF Pro Display", Roboto,
 		sans-serif;
 	background: transparent;
-	color: #f5f5f7;
+	color: var(--overlay-text);
 	-webkit-font-smoothing: antialiased;
 	user-select: none;
 }
@@ -26,26 +52,55 @@ body {
 	align-items: center;
 	justify-content: center;
 	height: 100%;
-	background: rgba(28, 28, 30, 0.95);
+	background: var(--overlay-bg);
 	border-radius: 16px;
 	padding: 24px;
-	box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+	box-shadow: 0 8px 32px var(--overlay-shadow);
 }
 
 .shortcut-key {
-	font-size: 32px;
-	font-weight: 600;
-	letter-spacing: 2px;
-	color: #64b5f6;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-wrap: nowrap;
+	gap: 4px;
 	text-align: center;
 	padding: 12px 24px;
-	background: rgba(100, 181, 246, 0.1);
+	white-space: nowrap;
+}
+
+/* 個別キーボックス（オーバーレイ用） */
+.overlay-key-box {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 36px;
+	padding: 8px 14px;
+	background: var(--overlay-key-bg);
+	border: 1px solid var(--overlay-key-border);
 	border-radius: 8px;
-	border: 1px solid rgba(100, 181, 246, 0.3);
+	font-size: 24px;
+	font-weight: 600;
+	color: var(--overlay-key-color);
+	font-family: "SF Mono", "Monaco", "Menlo", "Consolas", monospace;
+	box-shadow: 0 2px 0 rgba(0, 0, 0, 0.2);
+}
+
+/* 区切り文字（オーバーレイ用） */
+.overlay-key-separator {
+	color: var(--overlay-separator);
+	font-size: 20px;
+	font-weight: 500;
+	padding: 0 6px;
+}
+
+.overlay-key-separator.sequence {
+	color: var(--overlay-separator-sequence);
+	padding: 0 10px;
 }
 
 .countdown {
 	margin-top: 16px;
 	font-size: 14px;
-	color: #98989d;
+	color: var(--overlay-countdown);
 }
