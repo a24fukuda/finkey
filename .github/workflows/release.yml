@@ -50,6 +50,8 @@ jobs:
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           tagName: ${{ github.ref_name }}
           releaseName: 'Finkey ${{ github.ref_name }}'
@@ -63,6 +65,9 @@ jobs:
             | Windows | `.msi` or `.exe` |
             | macOS (Intel) | `_x64.dmg` |
             | macOS (Apple Silicon) | `_aarch64.dmg` |
+
+            ## Auto Update
+            This release supports auto-update. Existing users will be notified automatically.
           releaseDraft: true
           prerelease: false
           args: --target ${{ matrix.target }}
