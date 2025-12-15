@@ -13,10 +13,6 @@ jobs:
         include:
           - platform: windows-latest
             target: x86_64-pc-windows-msvc
-          - platform: macos-latest
-            target: x86_64-apple-darwin
-          - platform: macos-latest
-            target: aarch64-apple-darwin
 
     runs-on: ${{ matrix.platform }}
 
@@ -63,8 +59,6 @@ jobs:
             | Platform | File |
             |----------|------|
             | Windows | `.msi` or `.exe` |
-            | macOS (Intel) | `_x64.dmg` |
-            | macOS (Apple Silicon) | `_aarch64.dmg` |
 
             ## Auto Update
             This release supports auto-update. Existing users will be notified automatically.
