@@ -1,23 +1,18 @@
-# Shortcut Finder (Tauri) 🔍⚡
+# Finkey
 
-Mac Spotlight風の超軽量ショートカットキー検索アプリ。Tauri製でネイティブ並みのパフォーマンス。
+Spotlight風の軽量ショートカットキー検索アプリ。Tauri製でネイティブ並みのパフォーマンス。
 
-## ✨ 特徴
+## 特徴
 
-| 項目 | Tauri版 | Electron版 |
-|------|---------|------------|
-| **起動速度** | ~100ms | ~1000ms |
-| **メモリ使用量** | ~30MB | ~150MB |
-| **バイナリサイズ** | ~8MB | ~180MB |
-| **レスポンス** | ネイティブ級 | やや遅延 |
+- 超高速起動 - ネイティブWebViewを使用
+- Spotlight風UI - macOSライクな美しいインターフェース
+- インクリメンタル検索 - タグベースで素早く検索
+- アクティブアプリ検出 - 使用中のアプリのショートカットを優先表示
+- オーバーレイ表示 - 選択したショートカットを大きく表示
+- テーマ切り替え - ダーク/ライト/システム連動
+- クロスプラットフォーム - Windows / Mac
 
-- 🚀 **超高速起動** - ネイティブWebViewを使用
-- 🎯 **Spotlight風UI** - macOSライクな美しいインターフェース
-- 🔍 **インクリメンタル検索** - 日本語・英語対応
-- ⌨️ **グローバルショートカット** - どこからでも即座に起動
-- 🖥️ **クロスプラットフォーム** - Windows / Mac / Linux
-
-## 📦 インストール
+## インストール
 
 ### 必要要件
 
@@ -26,7 +21,6 @@ Mac Spotlight風の超軽量ショートカットキー検索アプリ。Tauri�
 - **システム依存**:
   - **Mac**: Xcode Command Line Tools
   - **Windows**: Visual Studio Build Tools, WebView2
-  - **Linux**: `webkit2gtk`, `libayatana-appindicator`
 
 ### セットアップ
 
@@ -35,8 +29,8 @@ Mac Spotlight風の超軽量ショートカットキー検索アプリ。Tauri�
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 
 # リポジトリをクローン
-git clone https://github.com/your-username/shortcut-finder-tauri.git
-cd shortcut-finder-tauri
+git clone https://github.com/your-username/finkey.git
+cd finkey
 
 # 依存関係をインストール
 npm install
@@ -57,7 +51,7 @@ npm run build:debug
 
 ビルドされたアプリは `src-tauri/target/release/bundle/` に出力されます。
 
-## 🎮 使い方
+## 使い方
 
 ### 起動
 
@@ -65,106 +59,143 @@ npm run build:debug
 
 | OS | ショートカット |
 |----|---------------|
-| Mac | `⌘ + Shift + K` |
-| Windows / Linux | `Ctrl + Shift + K` |
+| Mac | `Cmd + Shift + K` |
+| Windows | `Ctrl + Shift + K` |
+
+※ `settings.json` でカスタマイズ可能
 
 ### 操作
 
 | キー | 動作 |
 |------|------|
-| 文字入力 | ショートカットを検索 |
+| 文字入力 | ショートカットを検索（タグで絞り込み） |
 | `↑` / `↓` | 結果を選択 |
-| `Enter` | 詳細を表示 |
+| `Enter` | オーバーレイでショートカットを表示 |
 | `Esc` | ウィンドウを閉じる |
 
-### 検索のコツ
+## 設定ファイル
 
-```
-日本語: コピー, 保存, タブ, スクリーンショット
-英語: copy, save, tab, screenshot
-アプリ名: vscode, slack, zoom
-```
+設定ファイルは以下の場所に保存されます：
 
-## 📁 プロジェクト構造
+| OS | パス |
+|----|------|
+| Windows | `%APPDATA%\finkey\` |
+| Mac | `~/Library/Application Support/finkey/` |
 
-```
-shortcut-finder-tauri/
-├── package.json           # npm scripts
-├── src/                   # フロントエンド
-│   ├── index.html
-│   ├── styles.css
-│   ├── app.js
-│   └── shortcuts.js       # ショートカットDB (104件)
-└── src-tauri/             # Rustバックエンド
-    ├── Cargo.toml
-    ├── tauri.conf.json
-    ├── icons/
-    └── src/
-        └── main.rs        # グローバルショートカット、ウィンドウ制御
-```
+### settings.json
 
-## 🔧 カスタマイズ
+アプリの動作設定：
 
-### ショートカットの追加
-
-`src/shortcuts.js` を編集：
-
-```javascript
+```json
 {
-  id: 999,
-  category: "カテゴリ名",
-  action: "アクション名",
-  mac: "⌘ + K",
-  windows: "Ctrl + K",
-  description: "説明文",
-  tags: ["タグ1", "タグ2"]
+  "theme": "system",
+  "hotkey": "Ctrl+Shift+K",
+  "overlay_duration": 5
 }
 ```
 
-### 起動ショートカットの変更
+| 項目 | 説明 | 値 |
+|------|------|-----|
+| `theme` | テーマ設定 | `"system"`, `"light"`, `"dark"` |
+| `hotkey` | 起動ショートカット | `"Ctrl+Shift+K"` など |
+| `overlay_duration` | オーバーレイ表示秒数 | 数値（秒） |
 
-`src-tauri/src/main.rs` を編集：
+### keybindings.json
 
-```rust
-let shortcut = if cfg!(target_os = "macos") {
-    "Command+Shift+Space"  // 変更
-} else {
-    "Ctrl+Shift+Space"     // 変更
-};
+ショートカット定義ファイル：
+
+```json
+[
+  {
+    "name": "VS Code",
+    "icon": "📝",
+    "bind": "Code",
+    "keybindings": [
+      {
+        "action": "コマンドパレット",
+        "key": {
+          "windows": "Ctrl + Shift + P",
+          "macos": "Cmd + Shift + P"
+        },
+        "tags": ["コマンド", "command", "palette"]
+      }
+    ]
+  },
+  {
+    "os": "windows",
+    "icon": "🪟",
+    "keybindings": [
+      {
+        "action": "スクリーンショット",
+        "key": "Win + Shift + S",
+        "tags": ["スクショ", "screenshot", "キャプチャ"]
+      }
+    ]
+  }
+]
 ```
 
-## 🛠️ 技術スタック
+#### 設定項目
+
+| 項目 | 説明 |
+|------|------|
+| `name` | アプリ名（表示用） |
+| `icon` | アイコン（絵文字） |
+| `bind` | プロセス名/ウィンドウタイトル（マッチング用） |
+| `os` | OS固有設定（`"windows"` または `"macos"`） |
+| `keybindings` | ショートカット配列 |
+
+#### キーバインド設定
+
+| 項目 | 説明 |
+|------|------|
+| `action` | 操作名 |
+| `key` | キー（文字列またはOS別オブジェクト） |
+| `tags` | 検索用タグ |
+
+#### 順次入力キー
+
+Excelのリボンショートカットのような順次入力は `->` で記述：
+
+```json
+{
+  "action": "罫線（格子）",
+  "key": "Alt -> H -> B -> A",
+  "tags": ["罫線", "格子", "border"]
+}
+```
+
+## プロジェクト構造
+
+```
+finkey/
+├── package.json
+├── src/
+│   ├── index.html
+│   ├── overlay.html
+│   ├── styles.css
+│   ├── overlay.css
+│   ├── app.ts
+│   ├── overlay.ts
+│   ├── types.ts
+│   └── tauri-api.ts
+└── src-tauri/
+    ├── Cargo.toml
+    ├── tauri.conf.json
+    ├── defaults/
+    │   └── keybindings.json
+    └── src/
+        └── main.rs
+```
+
+## 技術スタック
 
 - **Tauri 1.6** - 軽量デスクトップアプリフレームワーク
 - **Rust** - 高速・安全なバックエンド
-- **HTML/CSS/JavaScript** - シンプルなフロントエンド（フレームワークなし）
+- **TypeScript** - 型安全なフロントエンド
+- **esbuild** - 高速ビルド
+- **Biome** - リンター/フォーマッター
 
-## 📋 収録ショートカット
-
-- **一般** (13件) - コピー、ペースト、保存など
-- **テキスト編集** (9件) - 太字、カーソル移動など
-- **ブラウザ** (15件) - タブ操作、開発者ツール
-- **システム (Mac)** (12件) - Spotlight、スクリーンショット
-- **システム (Windows)** (11件) - スナップ、仮想デスクトップ
-- **VS Code** (16件) - コマンドパレット、マルチカーソル
-- **Finder/エクスプローラー** (7件) - ファイル操作
-- **Slack** (4件) - チャンネル切り替え
-- **Excel** (7件) - セル操作、関数
-- **ターミナル** (5件) - コマンド履歴
-- **Zoom** (5件) - ミュート、画面共有
-
-**合計: 104件**
-
-## 📄 ライセンス
+## ライセンス
 
 MIT License
-
-## 🤝 貢献
-
-プルリクエスト歓迎です！
-
-1. Fork
-2. Create branch (`git checkout -b feature/amazing`)
-3. Commit (`git commit -m 'Add feature'`)
-4. Push (`git push origin feature/amazing`)
-5. Create Pull Request
