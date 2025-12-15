@@ -266,7 +266,7 @@ fn get_default_keybindings() -> Vec<AppConfig> {
 // 設定ディレクトリのパスを取得
 fn get_config_dir() -> Option<PathBuf> {
     let config_dir = dirs::config_dir()?;
-    Some(config_dir.join("shortcut-finder"))
+    Some(config_dir.join("finkey"))
 }
 
 // キーバインド設定ファイルのパスを取得

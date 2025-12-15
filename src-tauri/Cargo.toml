@@ -1,5 +1,5 @@
 [package]
-name = "shortcut-finder"
+name = "finkey"
 version = "1.0.0"
 description = "Spotlight-like shortcut key finder"
 authors = [""]
