@@ -33,7 +33,7 @@
       "endpoints": [
         "https://github.com/a24fukuda/finkey/releases/latest/download/latest.json"
       ],
-      "pubkey": "UPDATER_PUBKEY_PLACEHOLDER"
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDk4Qzc4QUE4NjlCNjdCMjkKUldRcGU3WnBxSXJIbU84eDlOY3o2blcyM3VscGI5OGxRNEZoVHA0NGRRSXlObFllbzhyOEhDbnkK"
     },
     "bundle": {
       "active": true,
