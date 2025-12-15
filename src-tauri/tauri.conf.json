@@ -31,7 +31,7 @@
       "active": true,
       "dialog": true,
       "endpoints": [
-        "https://github.com/ueyan/finkey/releases/latest/download/latest.json"
+        "https://github.com/a24fukuda/finkey/releases/latest/download/latest.json"
       ],
       "pubkey": "UPDATER_PUBKEY_PLACEHOLDER"
     },
