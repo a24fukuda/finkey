@@ -1,8 +1,17 @@
 import { invoke, listen } from "./tauri-api";
 
+// Tauri Window API の型
+interface TauriWindow {
+	appWindow?: {
+		startDragging: () => Promise<void>;
+		outerPosition: () => Promise<{ x: number; y: number }>;
+	};
+}
+
 // DOM要素
 const shortcutKeyEl = document.getElementById("shortcut-key") as HTMLElement;
 const countdownEl = document.getElementById("countdown") as HTMLElement;
+const overlayEl = document.getElementById("overlay") as HTMLElement;
 
 // 状態
 let countdownTimer: number | null = null;
@@ -58,14 +67,14 @@ function formatShortcutKey(key: string): string {
 		const keys = seq.split(" + ");
 
 		const formattedKeys = keys.map(
-			(k) => `<kbd class="overlay-key-box">${escapeHtml(k.trim())}</kbd>`,
+			(k) => `<kbd class="key-box">${escapeHtml(k.trim())}</kbd>`,
 		);
 
-		return formattedKeys.join('<span class="overlay-key-separator">+</span>');
+		return formattedKeys.join('<span class="key-separator">+</span>');
 	});
 
 	return formattedSequences.join(
-		'<span class="overlay-key-separator sequence">→</span>',
+		'<span class="key-separator sequence">→</span>',
 	);
 }
 
@@ -113,8 +122,56 @@ async function closeOverlay(): Promise<void> {
 	}
 }
 
+// ウィンドウ位置の保存（デバウンス用）
+let savePositionTimer: number | null = null;
+
+// Tauri Window APIを取得
+function getTauriWindow(): TauriWindow | undefined {
+	return (window.__TAURI__ as { window?: TauriWindow })?.window;
+}
+
+// ウィンドウのドラッグを開始
+async function startDragging(): Promise<void> {
+	try {
+		await getTauriWindow()?.appWindow?.startDragging();
+	} catch (_e) {
+		console.log("Failed to start dragging");
+	}
+}
+
+// ウィンドウ位置を保存
+async function savePosition(): Promise<void> {
+	try {
+		const position = await getTauriWindow()?.appWindow?.outerPosition();
+		if (position) {
+			await invoke("save_overlay_position", { x: position.x, y: position.y });
+		}
+	} catch (_e) {
+		console.log("Failed to save overlay position");
+	}
+}
+
+// デバウンス付きで位置を保存
+function savePositionDebounced(): void {
+	if (savePositionTimer !== null) {
+		clearTimeout(savePositionTimer);
+	}
+	savePositionTimer = window.setTimeout(() => {
+		savePosition();
+		savePositionTimer = null;
+	}, 300);
+}
+
 // 初期化
 async function init(): Promise<void> {
+	// マウスダウンでドラッグ開始
+	overlayEl.addEventListener("mousedown", (e) => {
+		// 左クリックのみ
+		if (e.button === 0) {
+			startDragging();
+		}
+	});
+
 	// Tauriイベントリスナー
 	try {
 		await listen<OverlayPayload>("overlay-show", (event) => {
@@ -128,6 +185,11 @@ async function init(): Promise<void> {
 
 			// カウントダウン開始
 			startCountdown(duration);
+		});
+
+		// ウィンドウ移動イベントをリッスン
+		await listen("tauri://move", () => {
+			savePositionDebounced();
 		});
 	} catch (_e) {
 		console.log("Failed to register event listener");

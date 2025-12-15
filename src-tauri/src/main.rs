@@ -185,6 +185,13 @@ pub enum ThemeSetting {
     Dark,
 }
 
+// オーバーレイの位置
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct OverlayPosition {
+    pub x: Option<i32>,
+    pub y: Option<i32>,
+}
+
 // アプリ設定（settings.json）
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AppSettings {
@@ -196,6 +203,9 @@ pub struct AppSettings {
     /// オーバーレイ表示時間（秒）
     #[serde(default = "default_overlay_duration")]
     pub overlay_duration: u32,
+    /// オーバーレイの位置（ドラッグで移動した場合に保存）
+    #[serde(default)]
+    pub overlay_position: OverlayPosition,
 }
 
 fn default_hotkey() -> String {
@@ -252,6 +262,7 @@ impl Default for AppSettings {
             theme: ThemeSetting::default(),
             hotkey: default_hotkey(),
             overlay_duration: default_overlay_duration(),
+            overlay_position: OverlayPosition::default(),
         }
     }
 }
@@ -334,7 +345,8 @@ fn save_settings(settings: &AppSettings) -> Result<(), String> {
         fs::create_dir_all(parent).map_err(|e| format!("ディレクトリ作成エラー: {e}"))?;
     }
 
-    let json = serde_json::to_string_pretty(settings).map_err(|e| format!("JSON変換エラー: {e}"))?;
+    let json =
+        serde_json::to_string_pretty(settings).map_err(|e| format!("JSON変換エラー: {e}"))?;
     fs::write(&path, json).map_err(|e| format!("ファイル書き込みエラー: {e}"))?;
 
     // キャッシュを更新
@@ -443,9 +455,9 @@ static WINDOW_VISIBLE: AtomicBool = AtomicBool::new(false);
 #[cfg(target_os = "windows")]
 mod active_window {
     use super::{ActiveWindowInfo, LAST_ACTIVE_HWND};
+    use windows::Win32::Foundation::CloseHandle;
     use windows::Win32::Foundation::HWND;
     use windows::Win32::System::ProcessStatus::GetModuleBaseNameW;
-    use windows::Win32::Foundation::CloseHandle;
     use windows::Win32::System::Threading::{
         GetCurrentProcessId, OpenProcess, PROCESS_QUERY_INFORMATION, PROCESS_VM_READ,
     };
@@ -733,8 +745,9 @@ fn get_shortcuts() -> Vec<NormalizedShortcut> {
 fn open_file_with_default_app(path: &std::path::Path) -> Result<(), String> {
     #[cfg(target_os = "windows")]
     {
-        std::process::Command::new("cmd")
-            .args(["/c", "start", "", &format!("\"{}\"", path.display())])
+        // explorer.exe でファイルを開く（パスのエスケープが不要）
+        std::process::Command::new("explorer")
+            .arg(path)
             .spawn()
             .map_err(|e| format!("ファイルを開けませんでした: {e}"))?;
     }
@@ -878,7 +891,7 @@ fn calculate_overlay_width(shortcut_key: &str) -> f64 {
 #[cfg(target_os = "windows")]
 fn show_window_no_focus(window: &tauri::Window) {
     use windows::Win32::UI::WindowsAndMessaging::{
-        ShowWindow, SetWindowPos, HWND_TOPMOST, SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOSIZE,
+        SetWindowPos, ShowWindow, HWND_TOPMOST, SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOSIZE,
         SW_SHOWNOACTIVATE,
     };
 
@@ -936,7 +949,13 @@ fn show_overlay(app: AppHandle, shortcut_key: String) -> Result<(), String> {
             height: 150.0,
         }));
 
-        let _ = overlay_window.center();
+        // 保存された位置があればその位置に、なければ中央に表示
+        if let (Some(x), Some(y)) = (settings.overlay_position.x, settings.overlay_position.y) {
+            let _ = overlay_window
+                .set_position(tauri::Position::Physical(tauri::PhysicalPosition { x, y }));
+        } else {
+            let _ = overlay_window.center();
+        }
 
         // フォーカスを奪わずに表示
         show_window_no_focus(&overlay_window);
@@ -988,6 +1007,17 @@ fn hide_overlay(app: AppHandle) {
     }
 }
 
+// オーバーレイの位置を保存
+#[tauri::command]
+fn save_overlay_position(x: i32, y: i32) -> Result<(), String> {
+    let mut settings = load_settings();
+    settings.overlay_position = OverlayPosition {
+        x: Some(x),
+        y: Some(y),
+    };
+    save_settings(&settings)
+}
+
 fn create_system_tray() -> SystemTray {
     let show = CustomMenuItem::new("show".to_string(), "ウィンドウを表示");
     let config = CustomMenuItem::new("config".to_string(), "設定を開く");
@@ -1035,12 +1065,9 @@ fn main() {
 
             // グローバルホットキーを登録
             let app_handle_clone = app_handle.clone();
-            if let Err(e) = app
-                .global_shortcut_manager()
-                .register(&hotkey, move || {
-                    toggle_window(&app_handle_clone);
-                })
-            {
+            if let Err(e) = app.global_shortcut_manager().register(&hotkey, move || {
+                toggle_window(&app_handle_clone);
+            }) {
                 eprintln!("Warning: Failed to register global hotkey ({hotkey}): {e:?}");
             }
 
@@ -1066,6 +1093,7 @@ fn main() {
                 #[cfg(debug_assertions)]
                 window.close_devtools();
             }
+
 
             Ok(())
         })
@@ -1103,7 +1131,8 @@ fn main() {
             set_theme_setting,
             get_system_theme,
             show_overlay,
-            hide_overlay
+            hide_overlay,
+            save_overlay_position
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
