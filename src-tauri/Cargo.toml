@@ -18,6 +18,7 @@ tauri = { version = "1.6", features = [
     "window-show",
     "window-center",
     "window-set-focus",
+    "window-start-dragging",
     "global-shortcut-all",
     "system-tray"
 ] }

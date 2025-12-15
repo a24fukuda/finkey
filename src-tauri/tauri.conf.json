@@ -21,7 +21,8 @@
         "hide": true,
         "show": true,
         "center": true,
-        "setFocus": true
+        "setFocus": true,
+        "startDragging": true
       },
       "globalShortcut": {
         "all": true
