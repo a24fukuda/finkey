@@ -9,6 +9,8 @@ interface TauriWindow {
 }
 
 // DOM要素
+const appNameEl = document.getElementById("app-name") as HTMLElement;
+const actionNameEl = document.getElementById("action-name") as HTMLElement;
 const shortcutKeyEl = document.getElementById("shortcut-key") as HTMLElement;
 const countdownEl = document.getElementById("countdown") as HTMLElement;
 const overlayEl = document.getElementById("overlay") as HTMLElement;
@@ -19,6 +21,8 @@ let remainingSeconds = 0;
 
 // オーバーレイペイロード
 interface OverlayPayload {
+	app_name: string;
+	action_name: string;
 	shortcut_key: string;
 	duration: number;
 	theme: string;
@@ -175,10 +179,15 @@ async function init(): Promise<void> {
 	// Tauriイベントリスナー
 	try {
 		await listen<OverlayPayload>("overlay-show", (event) => {
-			const { shortcut_key, duration, theme } = event.payload;
+			const { app_name, action_name, shortcut_key, duration, theme } =
+				event.payload;
 
 			// テーマを適用
 			applyTheme(theme);
+
+			// アプリ名とアクション名を表示
+			appNameEl.textContent = app_name;
+			actionNameEl.textContent = action_name;
 
 			// ショートカットキーを表示（個別ボックス形式）
 			shortcutKeyEl.innerHTML = formatShortcutKey(shortcut_key);

@@ -828,6 +828,8 @@ fn get_system_theme(window: tauri::Window) -> String {
 // オーバーレイ表示用のペイロード
 #[derive(Clone, Serialize)]
 struct OverlayPayload {
+    app_name: String,
+    action_name: String,
     shortcut_key: String,
     duration: u32,
     theme: String,
@@ -925,7 +927,7 @@ fn show_window_no_focus(window: &tauri::Window) {
 
 // オーバーレイウィンドウを表示
 #[tauri::command]
-fn show_overlay(app: AppHandle, shortcut_key: String) -> Result<(), String> {
+fn show_overlay(app: AppHandle, app_name: String, action_name: String, shortcut_key: String) -> Result<(), String> {
     let settings = load_settings();
     let duration = settings.overlay_duration;
     let theme = match settings.theme {
@@ -967,6 +969,8 @@ fn show_overlay(app: AppHandle, shortcut_key: String) -> Result<(), String> {
         let _ = overlay_window.emit(
             "overlay-show",
             OverlayPayload {
+                app_name,
+                action_name,
                 shortcut_key,
                 duration,
                 theme,

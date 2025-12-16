@@ -249,7 +249,11 @@ async function selectShortcut(): Promise<void> {
 
 	const shortcut = filteredShortcuts[selectedIndex];
 	try {
-		await invoke("show_overlay", { shortcutKey: shortcut.key });
+		await invoke("show_overlay", {
+			appName: shortcut.app,
+			actionName: shortcut.action,
+			shortcutKey: shortcut.key,
+		});
 	} catch (e) {
 		console.log("Failed to show overlay:", e);
 	}
