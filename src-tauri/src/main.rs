@@ -1075,18 +1075,6 @@ fn main() {
                 eprintln!("Warning: Failed to register global hotkey ({hotkey}): {e:?}");
             }
 
-            // Escキーでウィンドウを閉じる
-            if let Err(e) = app.global_shortcut_manager().register("Escape", move || {
-                if let Some(window) = app_handle.get_window("main") {
-                    if window.is_visible().unwrap_or(false) && window.is_focused().unwrap_or(false)
-                    {
-                        hide_window(&app_handle);
-                    }
-                }
-            }) {
-                eprintln!("Warning: Failed to register Escape shortcut: {e:?}");
-            }
-
             // 初期表示
             if let Some(window) = app.get_window("main") {
                 WINDOW_VISIBLE.store(true, Ordering::SeqCst);
