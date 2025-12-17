@@ -1,0 +1,1872 @@
+[
+  {
+    "icon": "💻",
+    "name": "VS Code",
+    "bind": [
+      "Code",
+      "Visual Studio Code"
+    ],
+    "keybindings": [
+      {
+        "action": "コマンドパレット",
+        "key": "⌘ + Shift + P",
+        "tags": [
+          "komandoparetto"
+        ]
+      },
+      {
+        "action": "クイックオープン",
+        "key": "⌘ + P",
+        "tags": [
+          "kuikkuopun"
+        ]
+      },
+      {
+        "action": "行を削除",
+        "key": "⌘ + Shift + K",
+        "tags": [
+          "gyouosakujo"
+        ]
+      },
+      {
+        "action": "行コメント切り替え",
+        "key": "⌘ + /",
+        "tags": [
+          "gyoukomentokirikae"
+        ]
+      },
+      {
+        "action": "定義に移動",
+        "key": "F12",
+        "tags": [
+          "teiginiido"
+        ]
+      },
+      {
+        "action": "サイドバー表示切り替え",
+        "key": "⌘ + B",
+        "tags": [
+          "saidobahyojikirikae"
+        ]
+      }
+    ]
+  },
+  {
+    "icon": "💻",
+    "name": "Cursor",
+    "bind": [
+      "Cursor"
+    ],
+    "keybindings": []
+  },
+  {
+    "icon": "🌐",
+    "name": "Chrome",
+    "bind": [
+      "chrome",
+      "Google Chrome"
+    ],
+    "keybindings": [
+      {
+        "action": "新しいタブ",
+        "key": "⌘ + T",
+        "tags": [
+          "atarashiitabu"
+        ]
+      },
+      {
+        "action": "閉じたタブを復元",
+        "key": "⌘ + Shift + T",
+        "tags": [
+          "tojitatabuofukugen"
+        ]
+      },
+      {
+        "action": "開発者ツール",
+        "key": "⌘ + Option + I",
+        "tags": [
+          "kaihatsushatsuru"
+        ]
+      }
+    ]
+  },
+  {
+    "icon": "🌐",
+    "name": "Edge",
+    "bind": [
+      "msedge",
+      "Microsoft Edge"
+    ],
+    "keybindings": []
+  },
+  {
+    "icon": "🌐",
+    "name": "Firefox",
+    "bind": [
+      "firefox",
+      "Firefox"
+    ],
+    "keybindings": []
+  },
+  {
+    "icon": "🌐",
+    "name": "Safari",
+    "bind": [
+      "Safari"
+    ],
+    "keybindings": []
+  },
+  {
+    "icon": "🌐",
+    "name": "Brave",
+    "bind": [
+      "brave",
+      "Brave"
+    ],
+    "keybindings": []
+  },
+  {
+    "icon": "📁",
+    "name": "エクスプローラー",
+    "bind": [
+      "explorer"
+    ],
+    "keybindings": []
+  },
+  {
+    "icon": "📁",
+    "name": "Finder",
+    "bind": [
+      "Finder"
+    ],
+    "keybindings": []
+  },
+  {
+    "icon": "💬",
+    "name": "Slack",
+    "bind": [
+      "Slack"
+    ],
+    "keybindings": [
+      {
+        "action": "クイックスイッチャー",
+        "key": "⌘ + K",
+        "tags": [
+          "kuikkusuitcha"
+        ]
+      }
+    ]
+  },
+  {
+    "icon": "📹",
+    "name": "Zoom",
+    "bind": [
+      "Zoom"
+    ],
+    "keybindings": [
+      {
+        "action": "ミュート切り替え",
+        "key": "⌘ + Shift + A",
+        "tags": [
+          "myutokirikae"
+        ]
+      },
+      {
+        "action": "ビデオ切り替え",
+        "key": "⌘ + Shift + V",
+        "tags": [
+          "bideokirikae"
+        ]
+      }
+    ]
+  },
+  {
+    "icon": "📊",
+    "name": "Excel",
+    "bind": [
+      "EXCEL",
+      "Excel"
+    ],
+    "keybindings": [
+      {
+        "action": "すべての罫線",
+        "key": "-",
+        "tags": [
+          "subetenokeisen"
+        ]
+      },
+      {
+        "action": "外枠罫線",
+        "key": "-",
+        "tags": [
+          "sotowakukeisen"
+        ]
+      },
+      {
+        "action": "罫線なし",
+        "key": "-",
+        "tags": [
+          "keisennashi"
+        ]
+      },
+      {
+        "action": "列幅の自動調整",
+        "key": "-",
+        "tags": [
+          "retsuhabanojidochosei"
+        ]
+      },
+      {
+        "action": "行の高さの自動調整",
+        "key": "-",
+        "tags": [
+          "gyounotakasanojidochosei"
+        ]
+      },
+      {
+        "action": "セルの書式設定",
+        "key": "⌘ + 1",
+        "tags": [
+          "serunoshoshikisettei"
+        ]
+      },
+      {
+        "action": "フィルター切り替え",
+        "key": "⌘ + Shift + L",
+        "tags": [
+          "fuirutakirikae"
+        ]
+      },
+      {
+        "action": "テーブル作成",
+        "key": "⌘ + T",
+        "tags": [
+          "teburusakusei"
+        ]
+      },
+      {
+        "action": "行全体を選択",
+        "key": "Shift + Space",
+        "tags": [
+          "gyouzentaiosentaku"
+        ]
+      },
+      {
+        "action": "列全体を選択",
+        "key": "Ctrl + Space",
+        "tags": [
+          "retsuzentaiosentaku"
+        ]
+      },
+      {
+        "action": "セルを挿入",
+        "key": "⌘ + Shift + +",
+        "tags": [
+          "seruosonyu"
+        ]
+      },
+      {
+        "action": "セルを削除",
+        "key": "⌘ + -",
+        "tags": [
+          "seruosakujo"
+        ]
+      },
+      {
+        "action": "今日の日付を入力",
+        "key": "Ctrl + ;",
+        "tags": [
+          "kyonohizukeonyuryoku"
+        ]
+      },
+      {
+        "action": "現在時刻を入力",
+        "key": "⌘ + ;",
+        "tags": [
+          "genzaijikokuonyuryoku"
+        ]
+      },
+      {
+        "action": "ブックを開く",
+        "key": "⌘ + O",
+        "tags": [
+          "bukkuohiraku"
+        ]
+      },
+      {
+        "action": "ブックを保存",
+        "key": "⌘ + S",
+        "tags": [
+          "bukkuohozon"
+        ]
+      },
+      {
+        "action": "名前を付けて保存",
+        "key": "F12",
+        "tags": [
+          "namaeotsuketehozon"
+        ]
+      },
+      {
+        "action": "ブックを閉じる",
+        "key": "⌘ + W",
+        "tags": [
+          "bukkuotojiru"
+        ]
+      },
+      {
+        "action": "新しいブック",
+        "key": "⌘ + N",
+        "tags": [
+          "atarashiibukku"
+        ]
+      },
+      {
+        "action": "印刷",
+        "key": "⌘ + P",
+        "tags": [
+          "insatsu"
+        ]
+      },
+      {
+        "action": "元に戻す",
+        "key": "⌘ + Z",
+        "tags": [
+          "motonimodosu"
+        ]
+      },
+      {
+        "action": "やり直し",
+        "key": "⌘ + Y",
+        "tags": [
+          "yarinaoshi"
+        ]
+      },
+      {
+        "action": "コピー",
+        "key": "⌘ + C",
+        "tags": [
+          "kopi"
+        ]
+      },
+      {
+        "action": "貼り付け",
+        "key": "⌘ + V",
+        "tags": [
+          "harizuke"
+        ]
+      },
+      {
+        "action": "切り取り",
+        "key": "⌘ + X",
+        "tags": [
+          "kiritori"
+        ]
+      },
+      {
+        "action": "検索",
+        "key": "⌘ + F",
+        "tags": [
+          "kensaku"
+        ]
+      },
+      {
+        "action": "置換",
+        "key": "⌘ + H",
+        "tags": [
+          "chikan"
+        ]
+      },
+      {
+        "action": "すべて選択",
+        "key": "⌘ + A",
+        "tags": [
+          "subetesentaku"
+        ]
+      },
+      {
+        "action": "太字",
+        "key": "⌘ + B",
+        "tags": [
+          "futoji"
+        ]
+      },
+      {
+        "action": "斜体",
+        "key": "⌘ + I",
+        "tags": [
+          "shatai"
+        ]
+      },
+      {
+        "action": "下線",
+        "key": "⌘ + U",
+        "tags": [
+          "kasen"
+        ]
+      },
+      {
+        "action": "取り消し線",
+        "key": "⌘ + Shift + X",
+        "tags": [
+          "torikeshisen"
+        ]
+      },
+      {
+        "action": "通貨形式",
+        "key": "Ctrl + Shift + $",
+        "tags": [
+          "tsukakeishiki"
+        ]
+      },
+      {
+        "action": "パーセント形式",
+        "key": "Ctrl + Shift + %",
+        "tags": [
+          "pasentokeishiki"
+        ]
+      },
+      {
+        "action": "日付形式",
+        "key": "Ctrl + Shift + #",
+        "tags": [
+          "hizukekeishiki"
+        ]
+      },
+      {
+        "action": "時刻形式",
+        "key": "Ctrl + @",
+        "tags": [
+          "jikokukeishiki"
+        ]
+      },
+      {
+        "action": "塗りつぶしの色",
+        "key": "-",
+        "tags": [
+          "nuritsubushinoiro"
+        ]
+      },
+      {
+        "action": "フォントの色",
+        "key": "-",
+        "tags": [
+          "fuontonoiro"
+        ]
+      },
+      {
+        "action": "セルを編集",
+        "key": "F2",
+        "tags": [
+          "seruohenshu"
+        ]
+      },
+      {
+        "action": "直前の操作を繰り返し",
+        "key": "F4",
+        "tags": [
+          "chokuzennososaokurikaeshi"
+        ]
+      },
+      {
+        "action": "上のセルをコピー",
+        "key": "⌘ + D",
+        "tags": [
+          "uenoseruokopi"
+        ]
+      },
+      {
+        "action": "左のセルをコピー",
+        "key": "⌘ + R",
+        "tags": [
+          "hidarinoseruokopi"
+        ]
+      },
+      {
+        "action": "オートSUM",
+        "key": "⌘ + Shift + T",
+        "tags": [
+          "otosum"
+        ]
+      },
+      {
+        "action": "関数の挿入",
+        "key": "Shift + F3",
+        "tags": [
+          "kansunosonyu"
+        ]
+      },
+      {
+        "action": "先頭セルに移動",
+        "key": "⌘ + Home",
+        "tags": [
+          "sentoseruniido"
+        ]
+      },
+      {
+        "action": "最後のセルに移動",
+        "key": "⌘ + End",
+        "tags": [
+          "saigonoseruniido"
+        ]
+      },
+      {
+        "action": "ジャンプ（指定セルへ移動）",
+        "key": "⌘ + G",
+        "tags": [
+          "jampu(shiteiserueido)"
+        ]
+      },
+      {
+        "action": "グラフシートを挿入",
+        "key": "F11",
+        "tags": [
+          "gurafushitoosonyu"
+        ]
+      },
+      {
+        "action": "ファイルタブを開く",
+        "key": "-",
+        "tags": [
+          "fuairutabuohiraku"
+        ]
+      },
+      {
+        "action": "ホームタブを開く",
+        "key": "-",
+        "tags": [
+          "homutabuohiraku"
+        ]
+      },
+      {
+        "action": "挿入タブを開く",
+        "key": "-",
+        "tags": [
+          "sonyutabuohiraku"
+        ]
+      },
+      {
+        "action": "ページレイアウトタブを開く",
+        "key": "-",
+        "tags": [
+          "pejireiautotabuohiraku"
+        ]
+      },
+      {
+        "action": "数式タブを開く",
+        "key": "-",
+        "tags": [
+          "sushikitabuohiraku"
+        ]
+      },
+      {
+        "action": "データタブを開く",
+        "key": "-",
+        "tags": [
+          "detatabuohiraku"
+        ]
+      },
+      {
+        "action": "校閲タブを開く",
+        "key": "-",
+        "tags": [
+          "koetsutabuohiraku"
+        ]
+      },
+      {
+        "action": "表示タブを開く",
+        "key": "-",
+        "tags": [
+          "hyojitabuohiraku"
+        ]
+      },
+      {
+        "action": "行を挿入",
+        "key": "-",
+        "tags": [
+          "gyouosonyu"
+        ]
+      },
+      {
+        "action": "列を挿入",
+        "key": "-",
+        "tags": [
+          "retsuosonyu"
+        ]
+      },
+      {
+        "action": "行を削除",
+        "key": "-",
+        "tags": [
+          "gyouosakujo"
+        ]
+      },
+      {
+        "action": "列を削除",
+        "key": "-",
+        "tags": [
+          "retsuosakujo"
+        ]
+      },
+      {
+        "action": "セルの結合",
+        "key": "-",
+        "tags": [
+          "serunoketsugo"
+        ]
+      },
+      {
+        "action": "セル結合の解除",
+        "key": "-",
+        "tags": [
+          "seruketsugonokaijo"
+        ]
+      },
+      {
+        "action": "左揃え",
+        "key": "-",
+        "tags": [
+          "hidarisoroe"
+        ]
+      },
+      {
+        "action": "中央揃え",
+        "key": "-",
+        "tags": [
+          "chuosoroe"
+        ]
+      },
+      {
+        "action": "右揃え",
+        "key": "-",
+        "tags": [
+          "migisoroe"
+        ]
+      },
+      {
+        "action": "折り返して全体を表示",
+        "key": "-",
+        "tags": [
+          "orikaeshitezentaiohyoji"
+        ]
+      },
+      {
+        "action": "シートを挿入",
+        "key": "Shift + F11",
+        "tags": [
+          "shitoosonyu"
+        ]
+      },
+      {
+        "action": "次のシートに移動",
+        "key": "⌘ + Page Down",
+        "tags": [
+          "tsuginoshitoniido"
+        ]
+      },
+      {
+        "action": "前のシートに移動",
+        "key": "⌘ + Page Up",
+        "tags": [
+          "maenoshitoniido"
+        ]
+      },
+      {
+        "action": "行を非表示",
+        "key": "⌘ + 9",
+        "tags": [
+          "gyouohihyoji"
+        ]
+      },
+      {
+        "action": "行を再表示",
+        "key": "⌘ + Shift + 9",
+        "tags": [
+          "gyouosaihyoji"
+        ]
+      },
+      {
+        "action": "列を非表示",
+        "key": "⌘ + 0",
+        "tags": [
+          "retsuohihyoji"
+        ]
+      },
+      {
+        "action": "列を再表示",
+        "key": "⌘ + Shift + 0",
+        "tags": [
+          "retsuosaihyoji"
+        ]
+      },
+      {
+        "action": "形式を選択して貼り付け",
+        "key": "⌘ + Option + V",
+        "tags": [
+          "keishikiosentakushiteharizuke"
+        ]
+      },
+      {
+        "action": "コメントを挿入",
+        "key": "Shift + F2",
+        "tags": [
+          "komentoosonyu"
+        ]
+      },
+      {
+        "action": "ハイパーリンクを挿入",
+        "key": "⌘ + K",
+        "tags": [
+          "haiparinkuosonyu"
+        ]
+      },
+      {
+        "action": "スペルチェック",
+        "key": "F7",
+        "tags": [
+          "superuchiekku"
+        ]
+      },
+      {
+        "action": "数式バーの展開/折りたたみ",
+        "key": "Ctrl + Shift + U",
+        "tags": [
+          "sushikibanotenkai/oritatami"
+        ]
+      },
+      {
+        "action": "名前の定義",
+        "key": "⌘ + F3",
+        "tags": [
+          "namaenoteigi"
+        ]
+      },
+      {
+        "action": "数式を表示/非表示",
+        "key": "Ctrl + `",
+        "tags": [
+          "sushikiohyoji/hihyoji"
+        ]
+      },
+      {
+        "action": "外枠の太罫線",
+        "key": "⌘ + Option + 0",
+        "tags": [
+          "sotowakunofutoshikeisen"
+        ]
+      },
+      {
+        "action": "罫線を削除",
+        "key": "⌘ + Option + -",
+        "tags": [
+          "keisenosakujo"
+        ]
+      },
+      {
+        "action": "下罫線",
+        "key": "-",
+        "tags": [
+          "shimokeisen"
+        ]
+      },
+      {
+        "action": "上罫線",
+        "key": "-",
+        "tags": [
+          "uekeisen"
+        ]
+      },
+      {
+        "action": "左罫線",
+        "key": "-",
+        "tags": [
+          "hidarikeisen"
+        ]
+      },
+      {
+        "action": "右罫線",
+        "key": "-",
+        "tags": [
+          "migikeisen"
+        ]
+      },
+      {
+        "action": "太い外枠罫線",
+        "key": "-",
+        "tags": [
+          "futoisotowakukeisen"
+        ]
+      },
+      {
+        "action": "条件付き書式",
+        "key": "-",
+        "tags": [
+          "jokentsukishoshiki"
+        ]
+      },
+      {
+        "action": "並べ替え",
+        "key": "-",
+        "tags": [
+          "narabegae"
+        ]
+      },
+      {
+        "action": "昇順で並べ替え",
+        "key": "-",
+        "tags": [
+          "shojundenarabegae"
+        ]
+      },
+      {
+        "action": "降順で並べ替え",
+        "key": "-",
+        "tags": [
+          "kojundenarabegae"
+        ]
+      },
+      {
+        "action": "ピボットテーブルを作成",
+        "key": "-",
+        "tags": [
+          "pibottoteburuosakusei"
+        ]
+      },
+      {
+        "action": "グラフを挿入",
+        "key": "-",
+        "tags": [
+          "gurafuosonyu"
+        ]
+      },
+      {
+        "action": "ウィンドウ枠の固定",
+        "key": "-",
+        "tags": [
+          "uindowakunokotei"
+        ]
+      },
+      {
+        "action": "改ページプレビュー",
+        "key": "-",
+        "tags": [
+          "aratamepejipurebyu"
+        ]
+      },
+      {
+        "action": "標準表示",
+        "key": "-",
+        "tags": [
+          "hyojunhyoji"
+        ]
+      },
+      {
+        "action": "ズームイン",
+        "key": "-",
+        "tags": [
+          "zumuin"
+        ]
+      },
+      {
+        "action": "ズームアウト",
+        "key": "-",
+        "tags": [
+          "zumuauto"
+        ]
+      },
+      {
+        "action": "入力を確定して下へ移動",
+        "key": "Enter",
+        "tags": [
+          "nyuryokuokakuteishiteshitaeido"
+        ]
+      },
+      {
+        "action": "入力を確定して上へ移動",
+        "key": "Shift + Enter",
+        "tags": [
+          "nyuryokuokakuteishiteueeido"
+        ]
+      },
+      {
+        "action": "入力をキャンセル",
+        "key": "Esc",
+        "tags": [
+          "nyuryokuokyanseru"
+        ]
+      },
+      {
+        "action": "セル内で改行",
+        "key": "Option + Enter",
+        "tags": [
+          "serunaidekaigyo"
+        ]
+      },
+      {
+        "action": "オートフィル",
+        "key": "⌘ + D",
+        "tags": [
+          "otofuiru"
+        ]
+      },
+      {
+        "action": "選択範囲にデータを入力",
+        "key": "⌘ + Enter",
+        "tags": [
+          "sentakuhaninidetaonyuryoku"
+        ]
+      },
+      {
+        "action": "フラッシュフィル",
+        "key": "⌘ + E",
+        "tags": [
+          "furasshufuiru"
+        ]
+      },
+      {
+        "action": "ヘルプを表示",
+        "key": "F1",
+        "tags": [
+          "herupuohyoji"
+        ]
+      },
+      {
+        "action": "名前の貼り付け",
+        "key": "F3",
+        "tags": [
+          "namaenoharizuke"
+        ]
+      },
+      {
+        "action": "ジャンプダイアログを表示",
+        "key": "F5",
+        "tags": [
+          "jampudaiaroguohyoji"
+        ]
+      },
+      {
+        "action": "ペイン間を移動",
+        "key": "F6",
+        "tags": [
+          "peinkanoido"
+        ]
+      },
+      {
+        "action": "拡張選択モード",
+        "key": "F8",
+        "tags": [
+          "kakuchosentakumodo"
+        ]
+      },
+      {
+        "action": "すべてのシートを再計算",
+        "key": "F9",
+        "tags": [
+          "subetenoshitoosaikeisan"
+        ]
+      },
+      {
+        "action": "キーヒントを表示",
+        "key": "F10",
+        "tags": [
+          "kihintoohyoji"
+        ]
+      },
+      {
+        "action": "埋め込みグラフを作成",
+        "key": "Alt + F1",
+        "tags": [
+          "umekomigurafuosakusei"
+        ]
+      },
+      {
+        "action": "Excelを終了",
+        "key": "Alt + F4",
+        "tags": [
+          "exceloshuryo"
+        ]
+      },
+      {
+        "action": "マクロダイアログを表示",
+        "key": "Alt + F8",
+        "tags": [
+          "makurodaiaroguohyoji"
+        ]
+      },
+      {
+        "action": "VBAエディタを開く",
+        "key": "Alt + F11",
+        "tags": [
+          "vbaedeitaohiraku"
+        ]
+      },
+      {
+        "action": "次を検索",
+        "key": "Shift + F4",
+        "tags": [
+          "tsugiokensaku"
+        ]
+      },
+      {
+        "action": "選択に追加モード",
+        "key": "Shift + F8",
+        "tags": [
+          "sentakunitsuikamodo"
+        ]
+      },
+      {
+        "action": "アクティブシートを再計算",
+        "key": "Shift + F9",
+        "tags": [
+          "akuteibushitoosaikeisan"
+        ]
+      },
+      {
+        "action": "右クリックメニューを表示",
+        "key": "Shift + F10",
+        "tags": [
+          "migikurikkumenyuohyoji"
+        ]
+      },
+      {
+        "action": "ブックウィンドウを閉じる",
+        "key": "Ctrl + F4",
+        "tags": [
+          "bukkuuindootojiru"
+        ]
+      },
+      {
+        "action": "次のブックウィンドウに切り替え",
+        "key": "Ctrl + F6",
+        "tags": [
+          "tsuginobukkuuindonikirikae"
+        ]
+      },
+      {
+        "action": "ブックウィンドウを最小化",
+        "key": "Ctrl + F9",
+        "tags": [
+          "bukkuuindoosaishoka"
+        ]
+      },
+      {
+        "action": "すべての数式を強制再計算",
+        "key": "Ctrl + Alt + F9",
+        "tags": [
+          "subetenosushikiokyoseisaikeisan"
+        ]
+      },
+      {
+        "action": "関数の引数を挿入",
+        "key": "Ctrl + Shift + A",
+        "tags": [
+          "kansunohikisuosonyu"
+        ]
+      },
+      {
+        "action": "最後のセルまで選択を拡張",
+        "key": "⌘ + Shift + End",
+        "tags": [
+          "saigonoserumadesentakuokakucho"
+        ]
+      },
+      {
+        "action": "先頭まで選択を拡張",
+        "key": "⌘ + Shift + Home",
+        "tags": [
+          "sentomadesentakuokakucho"
+        ]
+      },
+      {
+        "action": "フォントダイアログを表示",
+        "key": "⌘ + Shift + F",
+        "tags": [
+          "fuontodaiaroguohyoji"
+        ]
+      },
+      {
+        "action": "標準の表示形式",
+        "key": "Ctrl + Shift + ~",
+        "tags": [
+          "hyojunnohyojikeishiki"
+        ]
+      },
+      {
+        "action": "指数表示形式",
+        "key": "Ctrl + Shift + ^",
+        "tags": [
+          "shisuhyojikeishiki"
+        ]
+      },
+      {
+        "action": "桁区切り表示形式",
+        "key": "Ctrl + Shift + !",
+        "tags": [
+          "ketakugirihyojikeishiki"
+        ]
+      },
+      {
+        "action": "上のセルの数式をコピー",
+        "key": "Ctrl + '",
+        "tags": [
+          "uenoserunosushikiokopi"
+        ]
+      },
+      {
+        "action": "上のセルの値をコピー",
+        "key": "Ctrl + Shift + \"",
+        "tags": [
+          "uenoserunoneokopi"
+        ]
+      },
+      {
+        "action": "オブジェクトの表示/非表示",
+        "key": "Ctrl + 6",
+        "tags": [
+          "obujiekutonohyoji/hihyoji"
+        ]
+      },
+      {
+        "action": "アウトライン記号の表示/非表示",
+        "key": "Ctrl + 8",
+        "tags": [
+          "autorainkigonohyoji/hihyoji"
+        ]
+      },
+      {
+        "action": "選択範囲の角へ移動",
+        "key": "Ctrl + .",
+        "tags": [
+          "sentakuhaninokakueido"
+        ]
+      },
+      {
+        "action": "アクティブセルを画面に表示",
+        "key": "Ctrl + Backspace",
+        "tags": [
+          "akuteibuseruogamennihyoji"
+        ]
+      },
+      {
+        "action": "クイック分析",
+        "key": "Ctrl + Q",
+        "tags": [
+          "kuikkubunseki"
+        ]
+      },
+      {
+        "action": "現在の領域を選択",
+        "key": "Ctrl + Shift + *",
+        "tags": [
+          "genzainoryoikiosentaku"
+        ]
+      },
+      {
+        "action": "セルの内容を削除",
+        "key": "Delete",
+        "tags": [
+          "serunonaiyoosakujo"
+        ]
+      },
+      {
+        "action": "左の文字を削除",
+        "key": "Backspace",
+        "tags": [
+          "hidarinomojiosakujo"
+        ]
+      },
+      {
+        "action": "右のセルへ移動",
+        "key": "Tab",
+        "tags": [
+          "miginoserueido"
+        ]
+      },
+      {
+        "action": "行の先頭へ移動",
+        "key": "Home",
+        "tags": [
+          "gyounosentoeido"
+        ]
+      },
+      {
+        "action": "Endモードを有効化",
+        "key": "End",
+        "tags": [
+          "endmodooyukoka"
+        ]
+      },
+      {
+        "action": "1画面下にスクロール",
+        "key": "Page Down",
+        "tags": [
+          "1gamenkanisukuroru"
+        ]
+      },
+      {
+        "action": "1画面上にスクロール",
+        "key": "Page Up",
+        "tags": [
+          "1gamenjonisukuroru"
+        ]
+      },
+      {
+        "action": "1画面右にスクロール",
+        "key": "Alt + Page Down",
+        "tags": [
+          "1gamenmiginisukuroru"
+        ]
+      },
+      {
+        "action": "1画面左にスクロール",
+        "key": "Alt + Page Up",
+        "tags": [
+          "1gamenhidarinisukuroru"
+        ]
+      },
+      {
+        "action": "オートコンプリートリストを表示",
+        "key": "Alt + ↓",
+        "tags": [
+          "otokompuritorisutoohyoji"
+        ]
+      },
+      {
+        "action": "リボンの表示/非表示",
+        "key": "Ctrl + F1",
+        "tags": [
+          "ribonnohyoji/hihyoji"
+        ]
+      },
+      {
+        "action": "シート名を変更",
+        "key": "-",
+        "tags": [
+          "shitomeiohenko"
+        ]
+      },
+      {
+        "action": "シートを削除",
+        "key": "-",
+        "tags": [
+          "shitoosakujo"
+        ]
+      },
+      {
+        "action": "シートを移動またはコピー",
+        "key": "-",
+        "tags": [
+          "shitooidomatawakopi"
+        ]
+      },
+      {
+        "action": "印刷範囲を設定",
+        "key": "-",
+        "tags": [
+          "insatsuhaniosettei"
+        ]
+      },
+      {
+        "action": "印刷範囲をクリア",
+        "key": "-",
+        "tags": [
+          "insatsuhaniokuria"
+        ]
+      },
+      {
+        "action": "インデントを増やす",
+        "key": "-",
+        "tags": [
+          "indentoofuyasu"
+        ]
+      },
+      {
+        "action": "インデントを減らす",
+        "key": "-",
+        "tags": [
+          "indentooherasu"
+        ]
+      },
+      {
+        "action": "上揃え",
+        "key": "-",
+        "tags": [
+          "uesoroe"
+        ]
+      },
+      {
+        "action": "上下中央揃え",
+        "key": "-",
+        "tags": [
+          "jogechuosoroe"
+        ]
+      },
+      {
+        "action": "下揃え",
+        "key": "-",
+        "tags": [
+          "shitasoroe"
+        ]
+      },
+      {
+        "action": "フォントサイズを大きく",
+        "key": "-",
+        "tags": [
+          "fuontosaizuookiku"
+        ]
+      },
+      {
+        "action": "フォントサイズを小さく",
+        "key": "-",
+        "tags": [
+          "fuontosaizuochisaku"
+        ]
+      },
+      {
+        "action": "選択した行または列を非表示",
+        "key": "-",
+        "tags": [
+          "sentakushitagyoumatawaretsuohihyoji"
+        ]
+      },
+      {
+        "action": "選択した行または列を再表示",
+        "key": "-",
+        "tags": [
+          "sentakushitagyoumatawaretsuosaihyoji"
+        ]
+      },
+      {
+        "action": "画像を挿入",
+        "key": "-",
+        "tags": [
+          "gazoosonyu"
+        ]
+      },
+      {
+        "action": "図形を挿入",
+        "key": "-",
+        "tags": [
+          "zukeiosonyu"
+        ]
+      },
+      {
+        "action": "テキストボックスを挿入",
+        "key": "-",
+        "tags": [
+          "tekisutobokkusuosonyu"
+        ]
+      },
+      {
+        "action": "記号を挿入",
+        "key": "-",
+        "tags": [
+          "kigoosonyu"
+        ]
+      },
+      {
+        "action": "ヘッダーとフッターを挿入",
+        "key": "-",
+        "tags": [
+          "heddatofuttaosonyu"
+        ]
+      },
+      {
+        "action": "ピボットグラフを挿入",
+        "key": "-",
+        "tags": [
+          "pibottogurafuosonyu"
+        ]
+      },
+      {
+        "action": "ピボットテーブルをグループ化",
+        "key": "Alt + Shift + →",
+        "tags": [
+          "pibottoteburuogurupuka"
+        ]
+      },
+      {
+        "action": "ピボットテーブルのグループ解除",
+        "key": "Alt + Shift + ←",
+        "tags": [
+          "pibottoteburunogurupukaijo"
+        ]
+      },
+      {
+        "action": "前を検索",
+        "key": "Ctrl + Shift + F4",
+        "tags": [
+          "maeokensaku"
+        ]
+      },
+      {
+        "action": "全画面表示の切り替え",
+        "key": "Ctrl + Shift + F1",
+        "tags": [
+          "zengamenhyojinokirikae"
+        ]
+      },
+      {
+        "action": "隣接するシートを選択に追加",
+        "key": "⌘ + Shift + Page Down",
+        "tags": [
+          "rinsetsusurushitoosentakunitsuika"
+        ]
+      },
+      {
+        "action": "データ領域の右端まで移動",
+        "key": "⌘ + →",
+        "tags": [
+          "detaryoikinomigihashimadeido"
+        ]
+      },
+      {
+        "action": "データ領域の左端まで移動",
+        "key": "⌘ + ←",
+        "tags": [
+          "detaryoikinohidarihashimadeido"
+        ]
+      },
+      {
+        "action": "データ領域の上端まで移動",
+        "key": "⌘ + ↑",
+        "tags": [
+          "detaryoikinojotanmadeido"
+        ]
+      },
+      {
+        "action": "データ領域の下端まで移動",
+        "key": "⌘ + ↓",
+        "tags": [
+          "detaryoikinokatanmadeido"
+        ]
+      },
+      {
+        "action": "選択範囲を右に拡張",
+        "key": "Shift + →",
+        "tags": [
+          "sentakuhaniomiginikakucho"
+        ]
+      },
+      {
+        "action": "選択範囲を左に拡張",
+        "key": "Shift + ←",
+        "tags": [
+          "sentakuhaniohidarinikakucho"
+        ]
+      },
+      {
+        "action": "選択範囲を上に拡張",
+        "key": "Shift + ↑",
+        "tags": [
+          "sentakuhaniouenikakucho"
+        ]
+      },
+      {
+        "action": "選択範囲を下に拡張",
+        "key": "Shift + ↓",
+        "tags": [
+          "sentakuhanioshitanikakucho"
+        ]
+      },
+      {
+        "action": "データ領域の右端まで選択を拡張",
+        "key": "⌘ + Shift + →",
+        "tags": [
+          "detaryoikinomigihashimadesentakuokakucho"
+        ]
+      },
+      {
+        "action": "データ領域の左端まで選択を拡張",
+        "key": "⌘ + Shift + ←",
+        "tags": [
+          "detaryoikinohidarihashimadesentakuokakucho"
+        ]
+      },
+      {
+        "action": "データ領域の上端まで選択を拡張",
+        "key": "⌘ + Shift + ↑",
+        "tags": [
+          "detaryoikinojotanmadesentakuokakucho"
+        ]
+      },
+      {
+        "action": "データ領域の下端まで選択を拡張",
+        "key": "⌘ + Shift + ↓",
+        "tags": [
+          "detaryoikinokatanmadesentakuokakucho"
+        ]
+      },
+      {
+        "action": "セルのスタイルを変更",
+        "key": "Alt + '",
+        "tags": [
+          "serunosutairuohenko"
+        ]
+      },
+      {
+        "action": "コントロールメニューを表示",
+        "key": "Alt + Space",
+        "tags": [
+          "kontororumenyuohyoji"
+        ]
+      },
+      {
+        "action": "フィルターを有効化",
+        "key": "Alt + ↓",
+        "tags": [
+          "fuirutaoyukoka"
+        ]
+      },
+      {
+        "action": "データの入力規則",
+        "key": "-",
+        "tags": [
+          "detanonyuryokukisoku"
+        ]
+      },
+      {
+        "action": "重複の削除",
+        "key": "-",
+        "tags": [
+          "jufukunosakujo"
+        ]
+      },
+      {
+        "action": "区切り位置",
+        "key": "-",
+        "tags": [
+          "kugiriichi"
+        ]
+      },
+      {
+        "action": "グループ化",
+        "key": "-",
+        "tags": [
+          "gurupuka"
+        ]
+      },
+      {
+        "action": "グループ解除",
+        "key": "-",
+        "tags": [
+          "gurupukaijo"
+        ]
+      },
+      {
+        "action": "小計",
+        "key": "-",
+        "tags": [
+          "shokei"
+        ]
+      },
+      {
+        "action": "統合",
+        "key": "-",
+        "tags": [
+          "togo"
+        ]
+      },
+      {
+        "action": "ゴールシーク",
+        "key": "-",
+        "tags": [
+          "gorushiku"
+        ]
+      },
+      {
+        "action": "シナリオの登録と管理",
+        "key": "-",
+        "tags": [
+          "shinarionotorokutokanri"
+        ]
+      },
+      {
+        "action": "ウォッチウィンドウ",
+        "key": "-",
+        "tags": [
+          "uotchiuindou"
+        ]
+      },
+      {
+        "action": "参照元のトレース",
+        "key": "-",
+        "tags": [
+          "sanshomotonotoresu"
+        ]
+      },
+      {
+        "action": "参照先のトレース",
+        "key": "-",
+        "tags": [
+          "sanshosakinotoresu"
+        ]
+      },
+      {
+        "action": "トレース矢印の削除",
+        "key": "-",
+        "tags": [
+          "toresuyajirushinosakujo"
+        ]
+      },
+      {
+        "action": "エラーチェック",
+        "key": "-",
+        "tags": [
+          "erachiekku"
+        ]
+      },
+      {
+        "action": "数式の検証",
+        "key": "-",
+        "tags": [
+          "sushikinokensho"
+        ]
+      },
+      {
+        "action": "計算方法を自動に設定",
+        "key": "-",
+        "tags": [
+          "keisanhohoojidonisettei"
+        ]
+      },
+      {
+        "action": "計算方法を手動に設定",
+        "key": "-",
+        "tags": [
+          "keisanhohooshudonisettei"
+        ]
+      },
+      {
+        "action": "シートの保護",
+        "key": "-",
+        "tags": [
+          "shitonohogo"
+        ]
+      },
+      {
+        "action": "ブックの保護",
+        "key": "-",
+        "tags": [
+          "bukkunohogo"
+        ]
+      },
+      {
+        "action": "変更履歴の記録",
+        "key": "-",
+        "tags": [
+          "henkorirekinokiroku"
+        ]
+      },
+      {
+        "action": "コメントの表示/非表示",
+        "key": "-",
+        "tags": [
+          "komentonohyoji/hihyoji"
+        ]
+      },
+      {
+        "action": "翻訳",
+        "key": "-",
+        "tags": [
+          "honyaku"
+        ]
+      },
+      {
+        "action": "新しいウィンドウを開く",
+        "key": "-",
+        "tags": [
+          "atarashiiuindoohiraku"
+        ]
+      },
+      {
+        "action": "ウィンドウを整列",
+        "key": "-",
+        "tags": [
+          "uindooseiretsu"
+        ]
+      },
+      {
+        "action": "ウィンドウを分割",
+        "key": "-",
+        "tags": [
+          "uindoobunkatsu"
+        ]
+      },
+      {
+        "action": "マクロの記録",
+        "key": "-",
+        "tags": [
+          "makuronokiroku"
+        ]
+      },
+      {
+        "action": "列幅を指定",
+        "key": "-",
+        "tags": [
+          "retsuhabaoshitei"
+        ]
+      },
+      {
+        "action": "行の高さを指定",
+        "key": "-",
+        "tags": [
+          "gyounotakasaoshitei"
+        ]
+      },
+      {
+        "action": "標準の列幅",
+        "key": "-",
+        "tags": [
+          "hyojunnoretsuhaba"
+        ]
+      },
+      {
+        "action": "書式のクリア",
+        "key": "-",
+        "tags": [
+          "shoshikinokuria"
+        ]
+      },
+      {
+        "action": "すべてクリア",
+        "key": "-",
+        "tags": [
+          "subetekuria"
+        ]
+      },
+      {
+        "action": "コメントをクリア",
+        "key": "-",
+        "tags": [
+          "komentookuria"
+        ]
+      },
+      {
+        "action": "ハイパーリンクをクリア",
+        "key": "-",
+        "tags": [
+          "haiparinkuokuria"
+        ]
+      },
+      {
+        "action": "書式のコピー/貼り付け",
+        "key": "-",
+        "tags": [
+          "shoshikinokopi/harizuke"
+        ]
+      },
+      {
+        "action": "セルの保護を解除",
+        "key": "-",
+        "tags": [
+          "serunohogookaijo"
+        ]
+      },
+      {
+        "action": "オートフォーマット",
+        "key": "-",
+        "tags": [
+          "otofuomatto"
+        ]
+      }
+    ]
+  },
+  {
+    "icon": "⬛",
+    "name": "Windows Terminal",
+    "bind": [
+      "WindowsTerminal",
+      "Windows Terminal"
+    ],
+    "keybindings": []
+  },
+  {
+    "icon": "⬛",
+    "name": "Terminal",
+    "bind": [
+      "Terminal"
+    ],
+    "keybindings": []
+  },
+  {
+    "icon": "⬛",
+    "name": "PowerShell",
+    "bind": [
+      "powershell",
+      "PowerShell"
+    ],
+    "keybindings": []
+  },
+  {
+    "icon": "⬛",
+    "name": "コマンドプロンプト",
+    "bind": [
+      "cmd",
+      "コマンド プロンプト"
+    ],
+    "keybindings": []
+  },
+  {
+    "icon": "🍎",
+    "os": "macos",
+    "keybindings": [
+      {
+        "action": "Spotlight検索",
+        "key": "⌘ + Space",
+        "tags": [
+          "spotlightkensaku"
+        ]
+      },
+      {
+        "action": "スクリーンショット（全画面）",
+        "key": "⌘ + Shift + 3",
+        "tags": [
+          "sukurinshotto(zengamen)"
+        ]
+      },
+      {
+        "action": "スクリーンショット（選択範囲）",
+        "key": "⌘ + Shift + 4",
+        "tags": [
+          "sukurinshotto(sentakuhani)"
+        ]
+      },
+      {
+        "action": "Mission Control",
+        "key": "Ctrl + ↑",
+        "tags": [
+          "missioncontrol"
+        ]
+      },
+      {
+        "action": "アプリケーション切り替え",
+        "key": "⌘ + Tab",
+        "tags": [
+          "apurikeshonkirikae"
+        ]
+      },
+      {
+        "action": "Finderを開く",
+        "key": "⌘ + Option + Space",
+        "tags": [
+          "finderohiraku"
+        ]
+      },
+      {
+        "action": "強制終了ダイアログ",
+        "key": "⌘ + Option + Esc",
+        "tags": [
+          "kyoseishuryodaiarogu"
+        ]
+      },
+      {
+        "action": "ロック",
+        "key": "Ctrl + ⌘ + Q",
+        "tags": [
+          "rokku"
+        ]
+      }
+    ]
+  }
+]

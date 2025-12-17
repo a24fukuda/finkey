@@ -305,11 +305,13 @@ function filterByText(): void {
 	const detectedAppNames = matchedApps.map((app) => app.name.toLowerCase());
 	const osName = getOsName().toLowerCase();
 
-	// まずタグでフィルタリング（クエリがある場合）
+	// アクション名とタグでフィルタリング（クエリがある場合）
 	let filtered = shortcuts;
 	if (query) {
-		filtered = shortcuts.filter((shortcut) =>
-			shortcut.tags.some((tag) => tag.toLowerCase().includes(query)),
+		filtered = shortcuts.filter(
+			(shortcut) =>
+				shortcut.action.toLowerCase().includes(query) ||
+				shortcut.tags.some((tag) => tag.toLowerCase().includes(query)),
 		);
 	}
 
