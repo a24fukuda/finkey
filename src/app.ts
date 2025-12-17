@@ -249,7 +249,11 @@ async function selectShortcut(): Promise<void> {
 
 	const shortcut = filteredShortcuts[selectedIndex];
 	try {
-		await invoke("show_overlay", { shortcutKey: shortcut.key });
+		await invoke("show_overlay", {
+			appName: shortcut.app,
+			actionName: shortcut.action,
+			shortcutKey: shortcut.key,
+		});
 	} catch (e) {
 		console.log("Failed to show overlay:", e);
 	}
@@ -301,11 +305,13 @@ function filterByText(): void {
 	const detectedAppNames = matchedApps.map((app) => app.name.toLowerCase());
 	const osName = getOsName().toLowerCase();
 
-	// まずタグでフィルタリング（クエリがある場合）
+	// アクション名とタグでフィルタリング（クエリがある場合）
 	let filtered = shortcuts;
 	if (query) {
-		filtered = shortcuts.filter((shortcut) =>
-			shortcut.tags.some((tag) => tag.toLowerCase().includes(query)),
+		filtered = shortcuts.filter(
+			(shortcut) =>
+				shortcut.action.toLowerCase().includes(query) ||
+				shortcut.tags.some((tag) => tag.toLowerCase().includes(query)),
 		);
 	}
 

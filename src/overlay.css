@@ -83,6 +83,33 @@ body {
 }
 
 /* --------------------------------------------------------------------------
+   Shortcut Info (App name and Action)
+   -------------------------------------------------------------------------- */
+.shortcut-info {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	margin-bottom: 12px;
+	font-size: 14px;
+	color: var(--overlay-text);
+	opacity: 0.85;
+}
+
+.app-name {
+	font-weight: 600;
+}
+
+.action-name {
+	font-weight: 400;
+}
+
+.info-separator {
+	color: var(--separator-color);
+	font-weight: 300;
+}
+
+/* --------------------------------------------------------------------------
    Shortcut Key Display
    -------------------------------------------------------------------------- */
 .shortcut-key {

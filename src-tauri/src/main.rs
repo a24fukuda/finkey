@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::Mutex;
+use std::sync::{Mutex, OnceLock};
 use std::thread;
 use std::time::{Duration, SystemTime};
 use tauri::{
@@ -15,35 +15,6 @@ use tauri::{
 
 // デフォルトアイコン
 const DEFAULT_APP_ICON: &str = "📌";
-
-// キー設定（文字列またはプラットフォーム別オブジェクト）
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum KeyBinding {
-    Simple(String),
-    Platform {
-        #[serde(default)]
-        windows: Option<String>,
-        #[serde(default, rename = "macos")]
-        macos: Option<String>,
-    },
-}
-
-impl KeyBinding {
-    /// プラットフォームに応じたキーを取得
-    pub fn get_key(&self, is_macos: bool) -> Option<String> {
-        match self {
-            Self::Simple(key) => Some(key.clone()),
-            Self::Platform { windows, macos } => {
-                if is_macos {
-                    macos.clone()
-                } else {
-                    windows.clone()
-                }
-            }
-        }
-    }
-}
 
 // バインド設定（文字列または配列）
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -67,7 +38,7 @@ impl AppBind {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Keybinding {
     pub action: String,
-    pub key: KeyBinding,
+    pub key: String,
     #[serde(default)]
     pub tags: Vec<String>,
 }
@@ -192,10 +163,21 @@ pub struct OverlayPosition {
     pub y: Option<i32>,
 }
 
+// デフォルト設定の構造体（defaults/settings.json用、すべてのフィールドが必須）
+#[derive(Debug, Clone, Deserialize)]
+struct DefaultSettings {
+    theme: ThemeSetting,
+    hotkey: String,
+    overlay_duration: u32,
+}
+
+// デフォルト設定のキャッシュ
+static DEFAULT_SETTINGS_CACHE: OnceLock<DefaultSettings> = OnceLock::new();
+
 // アプリ設定（settings.json）
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AppSettings {
-    #[serde(default)]
+    #[serde(default = "default_theme")]
     pub theme: ThemeSetting,
     /// アプリ起動のホットキー（例: "Ctrl+Shift+K"）
     #[serde(default = "default_hotkey")]
@@ -208,16 +190,30 @@ pub struct AppSettings {
     pub overlay_position: OverlayPosition,
 }
 
+// デフォルト設定のJSONを読み込み（プラットフォーム別）
+#[cfg(target_os = "windows")]
+const DEFAULT_SETTINGS_JSON: &str = include_str!("../defaults/windows/settings.json");
+#[cfg(target_os = "macos")]
+const DEFAULT_SETTINGS_JSON: &str = include_str!("../defaults/macos/settings.json");
+
+/// defaults/settings.json から設定を取得（初回のみパースしてキャッシュ）
+fn get_defaults() -> &'static DefaultSettings {
+    DEFAULT_SETTINGS_CACHE.get_or_init(|| {
+        serde_json::from_str::<DefaultSettings>(DEFAULT_SETTINGS_JSON)
+            .expect("defaults/settings.json のパースに失敗しました。ファイルが正しいJSON形式か確認してください。")
+    })
+}
+
+fn default_theme() -> ThemeSetting {
+    get_defaults().theme.clone()
+}
+
 fn default_hotkey() -> String {
-    if cfg!(target_os = "macos") {
-        "Command+Shift+K".to_string()
-    } else {
-        "Ctrl+Shift+K".to_string()
-    }
+    get_defaults().hotkey.clone()
 }
 
 fn default_overlay_duration() -> u32 {
-    5
+    get_defaults().overlay_duration
 }
 
 /// ショートカットキー文字列を正規化（Tauri API用）
@@ -258,20 +254,25 @@ fn normalize_key_for_display(key: &str) -> String {
 
 impl Default for AppSettings {
     fn default() -> Self {
+        let defaults = get_defaults();
         Self {
-            theme: ThemeSetting::default(),
-            hotkey: default_hotkey(),
-            overlay_duration: default_overlay_duration(),
+            theme: defaults.theme.clone(),
+            hotkey: defaults.hotkey.clone(),
+            overlay_duration: defaults.overlay_duration,
             overlay_position: OverlayPosition::default(),
         }
     }
 }
 
-// デフォルトのキーバインド設定（JSONファイルから読み込み）
-const DEFAULT_KEYBINDINGS_JSON: &str = include_str!("../defaults/keybindings.json");
+// デフォルトのキーバインド設定（JSONファイルから読み込み、プラットフォーム別）
+#[cfg(target_os = "windows")]
+const DEFAULT_KEYBINDINGS_JSON: &str = include_str!("../defaults/windows/keybindings.json");
+#[cfg(target_os = "macos")]
+const DEFAULT_KEYBINDINGS_JSON: &str = include_str!("../defaults/macos/keybindings.json");
 
 fn get_default_keybindings() -> Vec<AppConfig> {
-    serde_json::from_str::<Vec<AppConfig>>(DEFAULT_KEYBINDINGS_JSON).unwrap_or_default()
+    serde_json::from_str::<Vec<AppConfig>>(DEFAULT_KEYBINDINGS_JSON)
+        .expect("defaults/keybindings.json のパースに失敗しました。ファイルが正しいJSON形式か確認してください。")
 }
 
 // 設定ディレクトリのパスを取得
@@ -705,10 +706,9 @@ fn get_matched_apps(info: Option<ActiveWindowInfo>) -> Vec<NormalizedApp> {
     }
 }
 
-// ショートカット一覧を取得するコマンド（プラットフォームに応じて正規化）
+// ショートカット一覧を取得するコマンド
 #[tauri::command]
 fn get_shortcuts() -> Vec<NormalizedShortcut> {
-    let is_macos = cfg!(target_os = "macos");
     let config = load_keybindings_config();
 
     config
@@ -719,14 +719,12 @@ fn get_shortcuts() -> Vec<NormalizedShortcut> {
             let app_name = app.get_name();
             let app_icon = app.get_icon();
             app.keybindings.into_iter().filter_map(move |kb| {
-                // プラットフォームに応じたキーを取得
-                let key = kb.key.get_key(is_macos)?;
                 // キーが"-"の場合は対象外
-                if key == "-" {
+                if kb.key == "-" {
                     return None;
                 }
                 // 表示用に正規化（スペースあり形式に統一）
-                let key = normalize_key_for_display(&key);
+                let key = normalize_key_for_display(&kb.key);
                 // 順次入力キーの区切り文字を変換: "->" → "→"
                 let key = key.replace(" -> ", " → ");
                 Some(NormalizedShortcut {
@@ -828,6 +826,8 @@ fn get_system_theme(window: tauri::Window) -> String {
 // オーバーレイ表示用のペイロード
 #[derive(Clone, Serialize)]
 struct OverlayPayload {
+    app_name: String,
+    action_name: String,
     shortcut_key: String,
     duration: u32,
     theme: String,
@@ -925,7 +925,12 @@ fn show_window_no_focus(window: &tauri::Window) {
 
 // オーバーレイウィンドウを表示
 #[tauri::command]
-fn show_overlay(app: AppHandle, shortcut_key: String) -> Result<(), String> {
+fn show_overlay(
+    app: AppHandle,
+    app_name: String,
+    action_name: String,
+    shortcut_key: String,
+) -> Result<(), String> {
     let settings = load_settings();
     let duration = settings.overlay_duration;
     let theme = match settings.theme {
@@ -967,6 +972,8 @@ fn show_overlay(app: AppHandle, shortcut_key: String) -> Result<(), String> {
         let _ = overlay_window.emit(
             "overlay-show",
             OverlayPayload {
+                app_name,
+                action_name,
                 shortcut_key,
                 duration,
                 theme,
@@ -1071,18 +1078,6 @@ fn main() {
                 eprintln!("Warning: Failed to register global hotkey ({hotkey}): {e:?}");
             }
 
-            // Escキーでウィンドウを閉じる
-            if let Err(e) = app.global_shortcut_manager().register("Escape", move || {
-                if let Some(window) = app_handle.get_window("main") {
-                    if window.is_visible().unwrap_or(false) && window.is_focused().unwrap_or(false)
-                    {
-                        hide_window(&app_handle);
-                    }
-                }
-            }) {
-                eprintln!("Warning: Failed to register Escape shortcut: {e:?}");
-            }
-
             // 初期表示
             if let Some(window) = app.get_window("main") {
                 WINDOW_VISIBLE.store(true, Ordering::SeqCst);
@@ -1093,7 +1088,6 @@ fn main() {
                 #[cfg(debug_assertions)]
                 window.close_devtools();
             }
-
 
             Ok(())
         })
