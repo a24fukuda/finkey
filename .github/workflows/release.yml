@@ -1,15 +1,70 @@
 name: Release
 
 on:
-  push:
-    tags:
-      - 'v*'
+  workflow_dispatch:
+    inputs:
+      commit:
+        description: 'ビルド対象のコミットSHA（空欄でmainの最新）'
+        required: false
+        default: ''
 
 permissions:
   contents: write
 
 jobs:
+  validate:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.check_version.outputs.VERSION }}
+      commit: ${{ steps.resolve_commit.outputs.COMMIT }}
+
+    steps:
+      - name: Resolve commit SHA
+        id: resolve_commit
+        run: |
+          if [ -z "${{ github.event.inputs.commit }}" ]; then
+            echo "COMMIT=${{ github.sha }}" >> $GITHUB_OUTPUT
+          else
+            echo "COMMIT=${{ github.event.inputs.commit }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.resolve_commit.outputs.COMMIT }}
+
+      - name: Check version match
+        id: check_version
+        run: |
+          CARGO_VERSION=$(grep -m1 '^version = ' src-tauri/Cargo.toml | sed 's/version = "\(.*\)"/\1/')
+          PACKAGE_VERSION=$(node -p "require('./package.json').version")
+
+          echo "Cargo.toml version: $CARGO_VERSION"
+          echo "package.json version: $PACKAGE_VERSION"
+
+          if [ "$CARGO_VERSION" != "$PACKAGE_VERSION" ]; then
+            echo "::error::Version mismatch! Cargo.toml ($CARGO_VERSION) != package.json ($PACKAGE_VERSION)"
+            exit 1
+          fi
+
+          echo "VERSION=$CARGO_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Check if version tag exists
+        run: |
+          if git ls-remote --tags origin | grep -q "refs/tags/v${{ steps.check_version.outputs.VERSION }}$"; then
+            echo "::error::Tag v${{ steps.check_version.outputs.VERSION }} already exists"
+            exit 1
+          fi
+
+      - name: Create version tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag "v${{ steps.check_version.outputs.VERSION }}"
+          git push origin "v${{ steps.check_version.outputs.VERSION }}"
+
   build:
+    needs: validate
     strategy:
       fail-fast: false
       matrix:
@@ -22,6 +77,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: v${{ needs.validate.outputs.version }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -52,8 +109,8 @@ jobs:
           TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
           TAURI_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
         with:
-          tagName: ${{ github.ref_name }}
-          releaseName: 'Finkey ${{ github.ref_name }}'
+          tagName: v${{ needs.validate.outputs.version }}
+          releaseName: 'Finkey v${{ needs.validate.outputs.version }}'
           releaseBody: |
             ## Changes
             See [CHANGELOG](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details.

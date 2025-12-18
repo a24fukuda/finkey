@@ -8,7 +8,7 @@
   },
   "package": {
     "productName": "Finkey",
-    "version": "1.0.0"
+    "version": ""
   },
   "tauri": {
     "allowlist": {
