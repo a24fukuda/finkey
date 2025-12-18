@@ -1,6 +1,6 @@
 [package]
 name = "finkey"
-version = "1.0.0"
+version = "0.2.1"
 description = "Spotlight-like shortcut key finder"
 authors = [""]
 license = "MIT"
