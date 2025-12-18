@@ -17,6 +17,7 @@ jobs:
     outputs:
       version: ${{ steps.check_version.outputs.VERSION }}
       commit: ${{ steps.resolve_commit.outputs.COMMIT }}
+      changelog: ${{ steps.generate_changelog.outputs.CHANGELOG }}
 
     steps:
       - name: Resolve commit SHA
@@ -32,6 +33,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ steps.resolve_commit.outputs.COMMIT }}
+          fetch-depth: 0
 
       - name: Check version match
         id: check_version
@@ -56,11 +58,40 @@ jobs:
             exit 1
           fi
 
+      - name: Generate changelog from commits
+        id: generate_changelog
+        run: |
+          # 前回のタグを取得（なければ最初のコミットから）
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+
+          if [ -z "$PREV_TAG" ]; then
+            echo "No previous tag found, using all commits"
+            CHANGELOG=$(git log --pretty=format:"- %s" --no-merges)
+          else
+            echo "Previous tag: $PREV_TAG"
+            CHANGELOG=$(git log ${PREV_TAG}..HEAD --pretty=format:"- %s" --no-merges)
+          fi
+
+          echo "Changelog:"
+          echo "$CHANGELOG"
+
+          # 複数行をGitHub Outputに設定
+          {
+            echo "CHANGELOG<<EOF"
+            echo "$CHANGELOG"
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
+
       - name: Create version tag
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git tag "v${{ steps.check_version.outputs.VERSION }}"
+          git tag -a "v${{ steps.check_version.outputs.VERSION }}" -m "$(cat <<'EOF'
+          Release v${{ steps.check_version.outputs.VERSION }}
+
+          ${{ steps.generate_changelog.outputs.CHANGELOG }}
+          EOF
+          )"
           git push origin "v${{ steps.check_version.outputs.VERSION }}"
 
   build:
