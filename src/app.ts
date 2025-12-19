@@ -1,3 +1,4 @@
+import { MACOS_NAME, WINDOWS_NAME } from "./constants";
 import { invoke, listen } from "./tauri-api";
 import type {
 	ActiveWindowInfo,
@@ -268,12 +269,12 @@ async function hideWindow(): Promise<void> {
 	}
 }
 
-// ショートカット設定ファイルを開く
+// ショートカット設定画面を開く
 async function openConfigFile(): Promise<void> {
 	try {
-		await invoke("open_config_file");
+		await invoke("open_keybindings_window");
 	} catch (e) {
-		console.log("Failed to open config file:", e);
+		console.log("Failed to open settings window:", e);
 	}
 }
 
@@ -294,7 +295,7 @@ function filterAndDisplay(): void {
 
 // OS名を取得
 function getOsName(): string {
-	return currentPlatform === "mac" ? "macOS" : "Windows";
+	return currentPlatform === "mac" ? MACOS_NAME : WINDOWS_NAME;
 }
 
 // テキストでフィルタリングとソート
