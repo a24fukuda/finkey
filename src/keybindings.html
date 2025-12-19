@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="ja" data-theme-setting="system">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>キーバインド設定</title>
+  <link rel="stylesheet" href="keybindings.css">
+</head>
+<body>
+  <div id="app">
+    <!-- ヘッダー -->
+    <div class="header" data-tauri-drag-region>
+      <h1 class="header-title">キーバインド設定</h1>
+      <button class="close-btn" id="close-btn" title="閉じる">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <!-- メインコンテンツ -->
+    <div class="main-content">
+      <!-- 左ペイン: アプリリスト -->
+      <div class="left-pane">
+        <div class="search-box">
+          <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <path d="m21 21-4.35-4.35"></path>
+          </svg>
+          <input type="text" id="app-search" placeholder="アプリを検索..." autocomplete="off">
+        </div>
+
+        <div class="app-list-container">
+          <!-- アプリセクション -->
+          <div class="app-section">
+            <div class="section-header">アプリ</div>
+            <div class="app-list" id="app-list"></div>
+          </div>
+
+          <!-- プラットフォームセクション -->
+          <div class="app-section">
+            <div class="section-header">プラットフォーム</div>
+            <div class="app-list" id="platform-list"></div>
+          </div>
+        </div>
+
+        <!-- 追加ボタン -->
+        <div class="add-menu-container">
+          <button class="add-btn" id="add-btn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            追加...
+          </button>
+          <div class="add-menu" id="add-menu" style="display: none;">
+            <button class="add-menu-item" id="add-app-btn">アプリを追加</button>
+            <button class="add-menu-item" id="add-platform-btn">プラットフォームを追加</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 右ペイン: キーバインド編集 -->
+      <div class="right-pane">
+        <!-- 未選択時 -->
+        <div class="no-selection" id="no-selection">
+          <div class="no-selection-icon">⌨️</div>
+          <p>左のリストからアプリを選択してください</p>
+        </div>
+
+        <!-- 編集エリア -->
+        <div class="edit-area" id="edit-area" style="display: none;">
+          <!-- アプリ情報 -->
+          <div class="app-info-section">
+            <div class="app-info-header">
+              <span class="app-info-icon" id="edit-icon">📌</span>
+              <span class="app-info-type" id="edit-type">アプリケーション設定</span>
+              <button class="delete-app-btn" id="delete-app-btn" title="この設定を削除">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+              </button>
+            </div>
+
+            <!-- アプリ設定フォーム -->
+            <div class="app-form" id="app-form">
+              <div class="form-row">
+                <label class="form-label">アイコン</label>
+                <input type="text" class="form-input icon-input" id="input-icon" placeholder="" maxlength="4" autocomplete="off">
+              </div>
+              <div class="form-row">
+                <label class="form-label">名前</label>
+                <input type="text" class="form-input" id="input-name" placeholder="アプリ名" autocomplete="off">
+              </div>
+              <div class="form-row">
+                <label class="form-label">バインド</label>
+                <div class="bind-tags" id="bind-tags">
+                  <input type="text" class="bind-input" id="bind-input" placeholder="プロセス名を入力してEnter" autocomplete="off">
+                </div>
+                <div class="form-hint">プロセス名またはウィンドウタイトル（複数可）</div>
+              </div>
+            </div>
+
+            <!-- プラットフォーム設定フォーム -->
+            <div class="platform-form" id="platform-form" style="display: none;">
+              <div class="form-row">
+                <label class="form-label">OS</label>
+                <select class="form-select" id="input-os">
+                  <option value="windows">Windows</option>
+                  <option value="macos">macOS</option>
+                </select>
+              </div>
+              <div class="form-row">
+                <label class="form-label">アイコン</label>
+                <input type="text" class="form-input icon-input" id="input-platform-icon" placeholder="" autocomplete="off">
+              </div>
+              <div class="form-hint platform-hint">このプラットフォームで常に有効</div>
+            </div>
+          </div>
+
+          <!-- キーバインドテーブル -->
+          <div class="keybindings-section">
+            <div class="section-title">キーバインド</div>
+            <div class="keybindings-table-container">
+              <table class="keybindings-table">
+                <thead>
+                  <tr>
+                    <th class="col-action">アクション</th>
+                    <th class="col-key">キー</th>
+                    <th class="col-tags">タグ</th>
+                    <th class="col-delete"></th>
+                  </tr>
+                </thead>
+                <tbody id="keybindings-tbody"></tbody>
+              </table>
+            </div>
+            <button class="add-keybinding-btn" id="add-keybinding-btn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              キーバインドを追加
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- フッター -->
+    <div class="footer">
+      <button class="footer-btn btn-secondary" id="reset-btn">リセット</button>
+      <div class="footer-right">
+        <button class="footer-btn btn-secondary" id="cancel-btn">キャンセル</button>
+        <button class="footer-btn btn-primary" id="save-btn">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- キー入力キャプチャモーダル -->
+  <div class="modal-overlay" id="key-capture-modal" style="display: none;">
+    <div class="modal">
+      <div class="modal-header">キーを入力してください</div>
+      <div class="modal-content">
+        <div class="captured-key" id="captured-key">
+          <span class="captured-key-placeholder">キーを押してください...</span>
+        </div>
+        <div class="capture-mode">
+          <label class="checkbox-label">
+            <input type="checkbox" id="sequence-mode">
+            <span>順次入力モード</span>
+          </label>
+          <span class="mode-hint">（例: Alt → H → B）</span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="modal-btn btn-secondary" id="clear-key-btn">クリア</button>
+        <button class="modal-btn btn-secondary" id="cancel-capture-btn">キャンセル</button>
+        <button class="modal-btn btn-primary" id="confirm-key-btn">確定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 確認ダイアログ -->
+  <div class="modal-overlay" id="confirm-modal" style="display: none;">
+    <div class="modal">
+      <div class="modal-header" id="confirm-title">確認</div>
+      <div class="modal-content">
+        <p id="confirm-message"></p>
+      </div>
+      <div class="modal-footer">
+        <button class="modal-btn btn-secondary" id="confirm-cancel-btn">キャンセル</button>
+        <button class="modal-btn btn-danger" id="confirm-ok-btn">削除</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="keybindings.js"></script>
+</body>
+</html>

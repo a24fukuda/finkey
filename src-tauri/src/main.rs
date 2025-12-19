@@ -13,9 +13,6 @@ use tauri::{
     SystemTrayMenu, SystemTrayMenuItem, WindowEvent,
 };
 
-// デフォルトアイコン
-const DEFAULT_APP_ICON: &str = "📌";
-
 // バインド設定（文字列または配列）
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -88,11 +85,9 @@ pub struct AppConfig {
 }
 
 impl AppConfig {
-    /// アイコンを取得（未設定の場合はデフォルト）
+    /// アイコンを取得（未設定の場合は空文字、フロントエンドでデフォルト適用）
     pub fn get_icon(&self) -> String {
-        self.icon
-            .clone()
-            .unwrap_or_else(|| DEFAULT_APP_ICON.to_string())
+        self.icon.clone().unwrap_or_default()
     }
 
     /// 表示名を取得（osがあればOS名、なければname）
@@ -427,6 +422,11 @@ fn save_keybindings_config(config: &Vec<AppConfig>) -> Result<(), String> {
     let json = serde_json::to_string_pretty(config).map_err(|e| format!("JSON変換エラー: {e}"))?;
     fs::write(&path, json).map_err(|e| format!("ファイル書き込みエラー: {e}"))?;
 
+    // キャッシュをクリア（次回読み込み時に再取得）
+    if let Ok(mut cache_guard) = KEYBINDINGS_CACHE.lock() {
+        *cache_guard = None;
+    }
+
     Ok(())
 }
 
@@ -598,7 +598,7 @@ fn get_last_active_app() -> Option<ActiveWindowInfo> {
 
 // ウィンドウの表示/非表示を切り替え
 fn toggle_window(app: &AppHandle) {
-    if let Some(window) = app.get_window("main") {
+    if let Some(window) = app.get_window("search") {
         if window.is_visible().unwrap_or(false) {
             WINDOW_VISIBLE.store(false, Ordering::SeqCst);
             let _ = window.hide();
@@ -618,7 +618,7 @@ fn toggle_window(app: &AppHandle) {
 
 // ウィンドウを非表示
 fn hide_window(app: &AppHandle) {
-    if let Some(window) = app.get_window("main") {
+    if let Some(window) = app.get_window("search") {
         WINDOW_VISIBLE.store(false, Ordering::SeqCst);
         let _ = window.hide();
         let _ = window.emit("window-hidden", ());
@@ -940,13 +940,13 @@ fn show_overlay(
     };
 
     // メインウィンドウを非表示
-    if let Some(main_window) = app.get_window("main") {
+    if let Some(main_window) = app.get_window("search") {
         WINDOW_VISIBLE.store(false, Ordering::SeqCst);
         let _ = main_window.hide();
     }
 
     // オーバーレイウィンドウを表示（フォーカスは設定しない）
-    if let Some(overlay_window) = app.get_window("overlay") {
+    if let Some(overlay_window) = app.get_window("keyguide") {
         // ウィンドウ幅を計算して設定
         let width = calculate_overlay_width(&shortcut_key);
         let _ = overlay_window.set_size(tauri::Size::Logical(tauri::LogicalSize {
@@ -983,7 +983,7 @@ fn show_overlay(
         // Rust側でタイマーを管理（フォーカスがなくてもタイマーが動作するように）
         thread::spawn(move || {
             thread::sleep(Duration::from_secs(u64::from(duration)));
-            if let Some(overlay) = app.get_window("overlay") {
+            if let Some(overlay) = app.get_window("keyguide") {
                 // Windows API で直接非表示にする（Tauriのhide()が効かない場合の対策）
                 #[cfg(target_os = "windows")]
                 {
@@ -1009,8 +1009,50 @@ fn show_overlay(
 // オーバーレイウィンドウを非表示
 #[tauri::command]
 fn hide_overlay(app: AppHandle) {
-    if let Some(overlay_window) = app.get_window("overlay") {
+    if let Some(overlay_window) = app.get_window("keyguide") {
         let _ = overlay_window.hide();
+    }
+}
+
+// キーバインド設定を生データで取得（設定画面用）
+#[tauri::command]
+fn get_keybindings_raw() -> Vec<AppConfig> {
+    load_keybindings_config()
+}
+
+// キーバインド設定を保存（設定画面用）
+#[tauri::command]
+fn save_keybindings(config: Vec<AppConfig>) -> Result<(), String> {
+    save_keybindings_config(&config)
+}
+
+// キーバインド設定をデフォルトに戻す
+#[tauri::command]
+fn reset_keybindings() -> Result<Vec<AppConfig>, String> {
+    let defaults = get_default_keybindings();
+    save_keybindings_config(&defaults)?;
+    Ok(defaults)
+}
+
+// キーバインド設定ウィンドウを開く
+#[tauri::command]
+fn open_keybindings_window(app: AppHandle) -> Result<(), String> {
+    if let Some(window) = app.get_window("keybindings") {
+        // ウィンドウを中央に配置して表示
+        let _ = window.center();
+        let _ = window.show();
+        let _ = window.set_focus();
+        Ok(())
+    } else {
+        Err("キーバインド設定ウィンドウが見つかりません".to_string())
+    }
+}
+
+// キーバインド設定ウィンドウを閉じる（非表示にする）
+#[tauri::command]
+fn close_keybindings_window(app: AppHandle) {
+    if let Some(window) = app.get_window("keybindings") {
+        let _ = window.hide();
     }
 }
 
@@ -1079,7 +1121,7 @@ fn main() {
             }
 
             // 初期表示
-            if let Some(window) = app.get_window("main") {
+            if let Some(window) = app.get_window("search") {
                 WINDOW_VISIBLE.store(true, Ordering::SeqCst);
                 let _ = window.center();
                 let _ = window.show();
@@ -1092,8 +1134,8 @@ fn main() {
             Ok(())
         })
         .on_window_event(|event| {
-            // メインウィンドウのみ処理（オーバーレイウィンドウは除外）
-            if event.window().label() != "main" {
+            // 検索ウィンドウのみ処理（キーガイドウィンドウは除外）
+            if event.window().label() != "search" {
                 return;
             }
 
@@ -1121,12 +1163,17 @@ fn main() {
             get_shortcuts,
             open_config_file,
             open_settings_file,
+            open_keybindings_window,
+            close_keybindings_window,
             get_theme_setting,
             set_theme_setting,
             get_system_theme,
             show_overlay,
             hide_overlay,
-            save_overlay_position
+            save_overlay_position,
+            get_keybindings_raw,
+            save_keybindings,
+            reset_keybindings
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
