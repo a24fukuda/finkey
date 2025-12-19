@@ -1069,11 +1069,13 @@ fn save_overlay_position(x: i32, y: i32) -> Result<(), String> {
 
 fn create_system_tray() -> SystemTray {
     let show = CustomMenuItem::new("show".to_string(), "ウィンドウを表示");
-    let config = CustomMenuItem::new("config".to_string(), "設定を開く");
+    let keybindings = CustomMenuItem::new("keybindings".to_string(), "キーバインド設定");
+    let config = CustomMenuItem::new("config".to_string(), "設定ファイルを開く");
     let quit = CustomMenuItem::new("quit".to_string(), "終了");
 
     let tray_menu = SystemTrayMenu::new()
         .add_item(show)
+        .add_item(keybindings)
         .add_item(config)
         .add_native_item(SystemTrayMenuItem::Separator)
         .add_item(quit);
@@ -1091,6 +1093,13 @@ fn main() {
             SystemTrayEvent::MenuItemClick { id, .. } => match id.as_str() {
                 "show" => {
                     toggle_window(app);
+                }
+                "keybindings" => {
+                    if let Some(window) = app.get_window("keybindings") {
+                        let _ = window.center();
+                        let _ = window.show();
+                        let _ = window.set_focus();
+                    }
                 }
                 "config" => {
                     let _ = open_config_file();
