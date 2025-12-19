@@ -1,4 +1,5 @@
 import { invoke, listen } from "./tauri-api";
+import { applyThemeFromSetting } from "./theme";
 
 // Tauri Window API の型
 interface TauriWindow {
@@ -26,32 +27,6 @@ interface OverlayPayload {
 	shortcut_key: string;
 	duration: number;
 	theme: string;
-}
-
-// システムテーマを取得
-function getSystemTheme(): "light" | "dark" {
-	return window.matchMedia("(prefers-color-scheme: dark)").matches
-		? "dark"
-		: "light";
-}
-
-// テーマを適用
-function applyTheme(themeSetting: string): void {
-	let effectiveTheme: "light" | "dark";
-
-	if (themeSetting === "system") {
-		effectiveTheme = getSystemTheme();
-	} else if (themeSetting === "light") {
-		effectiveTheme = "light";
-	} else {
-		effectiveTheme = "dark";
-	}
-
-	if (effectiveTheme === "light") {
-		document.documentElement.setAttribute("data-theme", "light");
-	} else {
-		document.documentElement.removeAttribute("data-theme");
-	}
 }
 
 // HTMLエスケープ
@@ -183,7 +158,7 @@ async function init(): Promise<void> {
 				event.payload;
 
 			// テーマを適用
-			applyTheme(theme);
+			applyThemeFromSetting(theme);
 
 			// アプリ名とアクション名を表示
 			appNameEl.textContent = app_name;

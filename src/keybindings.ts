@@ -6,6 +6,11 @@ import {
 	getOsName,
 } from "./constants";
 import { invoke } from "./tauri-api";
+import {
+	loadAndApplyTheme,
+	setupSystemThemeListener,
+	setupWindowFocusListener,
+} from "./theme";
 import type { AppConfig, Keybinding, OsType as OsTypeValue } from "./types";
 
 // DOM要素
@@ -59,37 +64,11 @@ let currentKeyCaptureCallback: ((key: string) => void) | null = null;
 let capturedKeys: string[] = [];
 let confirmCallback: (() => void) | null = null;
 
-// テーマ設定
-type ThemeSetting = "system" | "light" | "dark";
-
-function getSystemTheme(): "light" | "dark" {
-	return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-}
-
-async function loadAndApplyTheme(): Promise<void> {
-	try {
-		const theme = (await invoke<string>("get_theme_setting")) as ThemeSetting;
-		let effectiveTheme: "light" | "dark";
-
-		if (theme === "system") {
-			effectiveTheme = getSystemTheme();
-		} else {
-			effectiveTheme = theme;
-		}
-
-		if (effectiveTheme === "light") {
-			document.documentElement.setAttribute("data-theme", "light");
-		} else {
-			document.documentElement.removeAttribute("data-theme");
-		}
-	} catch (_e) {
-		// デフォルトはダークテーマ
-	}
-}
-
 // 初期化
 async function init(): Promise<void> {
 	await loadAndApplyTheme();
+	setupSystemThemeListener();
+	setupWindowFocusListener();
 	await loadKeybindings();
 	renderAppList();
 	setupEventListeners();

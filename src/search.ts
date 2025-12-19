@@ -1,5 +1,12 @@
 import { MACOS_NAME, WINDOWS_NAME } from "./constants";
 import { invoke, listen } from "./tauri-api";
+import {
+	applyTheme,
+	getCurrentThemeSetting,
+	getThemeButtonTitle,
+	loadAndApplyTheme,
+	toggleTheme,
+} from "./theme";
 import type {
 	ActiveWindowInfo,
 	NormalizedApp,
@@ -49,10 +56,6 @@ const themeToggleBtn = document.getElementById(
 	"theme-toggle",
 ) as HTMLButtonElement;
 
-// テーマ設定
-type ThemeSetting = "system" | "light" | "dark";
-let currentThemeSetting: ThemeSetting = "system";
-
 // 状態
 let currentPlatform: Platform = "mac";
 let selectedIndex = 0;
@@ -61,75 +64,17 @@ let activeWindowInfo: ActiveWindowInfo | null = null;
 let matchedApps: NormalizedApp[] = [];
 let shortcuts: Shortcut[] = [];
 
-// システムテーマを取得（同期的にCSSメディアクエリを使用）
-function getSystemTheme(): "light" | "dark" {
-	return window.matchMedia("(prefers-color-scheme: dark)").matches
-		? "dark"
-		: "light";
-}
-
-// テーマを適用する
-function applyTheme(): void {
-	let effectiveTheme: "light" | "dark";
-
-	if (currentThemeSetting === "system") {
-		effectiveTheme = getSystemTheme();
-	} else {
-		effectiveTheme = currentThemeSetting;
-	}
-
-	// data-theme属性を設定（lightの場合のみ属性を追加、darkはデフォルト）
-	if (effectiveTheme === "light") {
-		document.documentElement.setAttribute("data-theme", "light");
-	} else {
-		document.documentElement.removeAttribute("data-theme");
-	}
-
-	// data-theme-setting属性を設定（アイコン切り替え用）
-	document.documentElement.setAttribute(
-		"data-theme-setting",
-		currentThemeSetting,
-	);
-
-	// ボタンのtitleを更新
-	const titles: Record<ThemeSetting, string> = {
-		system: "テーマ: システム設定に従う",
-		light: "テーマ: ライト",
-		dark: "テーマ: ダーク",
-	};
-	themeToggleBtn.title = titles[currentThemeSetting];
-}
-
-// テーマ設定を切り替え（system -> light -> dark -> system）
-function toggleTheme(): void {
-	const order: ThemeSetting[] = ["system", "light", "dark"];
-	const currentIndex = order.indexOf(currentThemeSetting);
-	currentThemeSetting = order[(currentIndex + 1) % order.length];
-
-	// テーマを即座に適用
-	applyTheme();
-
-	// 設定を非同期で保存（UIには影響しない）
-	invoke("set_theme_setting", { theme: currentThemeSetting }).catch(() => {
-		console.log("Failed to save theme setting");
-	});
-}
-
-// テーマ設定を読み込み
-async function loadThemeSetting(): Promise<void> {
-	try {
-		const theme = await invoke<string>("get_theme_setting");
-		currentThemeSetting = theme as ThemeSetting;
-	} catch (_e) {
-		currentThemeSetting = "system";
-	}
-	applyTheme();
+// テーマ切り替えハンドラ
+async function handleToggleTheme(): Promise<void> {
+	await toggleTheme();
+	themeToggleBtn.title = getThemeButtonTitle();
 }
 
 // 初期化
 async function init(): Promise<void> {
 	// テーマを初期化
-	await loadThemeSetting();
+	await loadAndApplyTheme();
+	themeToggleBtn.title = getThemeButtonTitle();
 
 	// プラットフォーム検出
 	try {
@@ -155,7 +100,7 @@ async function init(): Promise<void> {
 	searchInput.addEventListener("keydown", handleKeydown);
 	openConfigBtn.addEventListener("click", openConfigFile);
 	openSettingsBtn.addEventListener("click", openSettingsFile);
-	themeToggleBtn.addEventListener("click", toggleTheme);
+	themeToggleBtn.addEventListener("click", handleToggleTheme);
 
 	// Tauriイベントリスナー（アクティブウィンドウ情報を受け取る）
 	try {
@@ -163,9 +108,10 @@ async function init(): Promise<void> {
 			activeWindowInfo = event.payload ?? null;
 
 			// ウィンドウ表示時にテーマを再適用（システム設定が変わっている可能性があるため）
-			if (currentThemeSetting === "system") {
+			if (getCurrentThemeSetting() === "system") {
 				applyTheme();
 			}
+			themeToggleBtn.title = getThemeButtonTitle();
 
 			// ショートカットデータを再読み込み（設定ファイルが変更されている可能性があるため）
 			try {
