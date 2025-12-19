@@ -77,7 +77,8 @@
     },
     "windows": [
       {
-        "label": "main",
+        "label": "search",
+        "url": "search.html",
         "fullscreen": false,
         "resizable": false,
         "title": "Finkey",
@@ -92,11 +93,11 @@
         "focus": true
       },
       {
-        "label": "overlay",
-        "url": "overlay.html",
+        "label": "keyguide",
+        "url": "keyguide.html",
         "fullscreen": false,
         "resizable": false,
-        "title": "Shortcut Overlay",
+        "title": "キーガイド",
         "width": 400,
         "height": 150,
         "center": true,

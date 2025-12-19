@@ -598,7 +598,7 @@ fn get_last_active_app() -> Option<ActiveWindowInfo> {
 
 // ウィンドウの表示/非表示を切り替え
 fn toggle_window(app: &AppHandle) {
-    if let Some(window) = app.get_window("main") {
+    if let Some(window) = app.get_window("search") {
         if window.is_visible().unwrap_or(false) {
             WINDOW_VISIBLE.store(false, Ordering::SeqCst);
             let _ = window.hide();
@@ -618,7 +618,7 @@ fn toggle_window(app: &AppHandle) {
 
 // ウィンドウを非表示
 fn hide_window(app: &AppHandle) {
-    if let Some(window) = app.get_window("main") {
+    if let Some(window) = app.get_window("search") {
         WINDOW_VISIBLE.store(false, Ordering::SeqCst);
         let _ = window.hide();
         let _ = window.emit("window-hidden", ());
@@ -940,13 +940,13 @@ fn show_overlay(
     };
 
     // メインウィンドウを非表示
-    if let Some(main_window) = app.get_window("main") {
+    if let Some(main_window) = app.get_window("search") {
         WINDOW_VISIBLE.store(false, Ordering::SeqCst);
         let _ = main_window.hide();
     }
 
     // オーバーレイウィンドウを表示（フォーカスは設定しない）
-    if let Some(overlay_window) = app.get_window("overlay") {
+    if let Some(overlay_window) = app.get_window("keyguide") {
         // ウィンドウ幅を計算して設定
         let width = calculate_overlay_width(&shortcut_key);
         let _ = overlay_window.set_size(tauri::Size::Logical(tauri::LogicalSize {
@@ -983,7 +983,7 @@ fn show_overlay(
         // Rust側でタイマーを管理（フォーカスがなくてもタイマーが動作するように）
         thread::spawn(move || {
             thread::sleep(Duration::from_secs(u64::from(duration)));
-            if let Some(overlay) = app.get_window("overlay") {
+            if let Some(overlay) = app.get_window("keyguide") {
                 // Windows API で直接非表示にする（Tauriのhide()が効かない場合の対策）
                 #[cfg(target_os = "windows")]
                 {
@@ -1009,7 +1009,7 @@ fn show_overlay(
 // オーバーレイウィンドウを非表示
 #[tauri::command]
 fn hide_overlay(app: AppHandle) {
-    if let Some(overlay_window) = app.get_window("overlay") {
+    if let Some(overlay_window) = app.get_window("keyguide") {
         let _ = overlay_window.hide();
     }
 }
@@ -1121,7 +1121,7 @@ fn main() {
             }
 
             // 初期表示
-            if let Some(window) = app.get_window("main") {
+            if let Some(window) = app.get_window("search") {
                 WINDOW_VISIBLE.store(true, Ordering::SeqCst);
                 let _ = window.center();
                 let _ = window.show();
@@ -1134,8 +1134,8 @@ fn main() {
             Ok(())
         })
         .on_window_event(|event| {
-            // メインウィンドウのみ処理（オーバーレイウィンドウは除外）
-            if event.window().label() != "main" {
+            // 検索ウィンドウのみ処理（キーガイドウィンドウは除外）
+            if event.window().label() != "search" {
                 return;
             }
 
