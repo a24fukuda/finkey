@@ -12,6 +12,9 @@ interface TauriGlobal {
 			handler: (event: { payload: T }) => void,
 		) => Promise<() => void>;
 	};
+	shell?: {
+		open: (url: string) => Promise<void>;
+	};
 }
 
 declare global {
@@ -43,3 +46,11 @@ export const listen =
 	): Promise<() => void> => {
 		return () => {};
 	});
+
+/**
+ * URLをデフォルトブラウザで開く
+ * Tauri環境外では何もしない
+ */
+export async function openUrl(url: string): Promise<void> {
+	await window.__TAURI__?.shell?.open(url);
+}

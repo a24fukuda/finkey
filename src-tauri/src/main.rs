@@ -1056,6 +1056,33 @@ fn close_keybindings_window(app: AppHandle) {
     }
 }
 
+// アプリのバージョンを取得
+#[tauri::command]
+fn get_app_version() -> String {
+    env!("CARGO_PKG_VERSION").to_string()
+}
+
+// バージョン情報ウィンドウを開く
+#[tauri::command]
+fn open_about_window(app: AppHandle) -> Result<(), String> {
+    if let Some(window) = app.get_window("about") {
+        let _ = window.center();
+        let _ = window.show();
+        let _ = window.set_focus();
+        Ok(())
+    } else {
+        Err("バージョン情報ウィンドウが見つかりません".to_string())
+    }
+}
+
+// バージョン情報ウィンドウを閉じる（非表示にする）
+#[tauri::command]
+fn close_about_window(app: AppHandle) {
+    if let Some(window) = app.get_window("about") {
+        let _ = window.hide();
+    }
+}
+
 // オーバーレイの位置を保存
 #[tauri::command]
 fn save_overlay_position(x: i32, y: i32) -> Result<(), String> {
@@ -1071,6 +1098,7 @@ fn create_system_tray() -> SystemTray {
     let show = CustomMenuItem::new("show".to_string(), "ウィンドウを表示");
     let keybindings = CustomMenuItem::new("keybindings".to_string(), "キーバインド設定");
     let config = CustomMenuItem::new("config".to_string(), "設定ファイルを開く");
+    let about = CustomMenuItem::new("about".to_string(), "About");
     let quit = CustomMenuItem::new("quit".to_string(), "終了");
 
     let tray_menu = SystemTrayMenu::new()
@@ -1078,6 +1106,7 @@ fn create_system_tray() -> SystemTray {
         .add_item(keybindings)
         .add_item(config)
         .add_native_item(SystemTrayMenuItem::Separator)
+        .add_item(about)
         .add_item(quit);
 
     SystemTray::new().with_menu(tray_menu)
@@ -1103,6 +1132,13 @@ fn main() {
                 }
                 "config" => {
                     let _ = open_config_file();
+                }
+                "about" => {
+                    if let Some(window) = app.get_window("about") {
+                        let _ = window.center();
+                        let _ = window.show();
+                        let _ = window.set_focus();
+                    }
                 }
                 "quit" => {
                     std::process::exit(0);
@@ -1174,6 +1210,9 @@ fn main() {
             open_settings_file,
             open_keybindings_window,
             close_keybindings_window,
+            get_app_version,
+            open_about_window,
+            close_about_window,
             get_theme_setting,
             set_theme_setting,
             get_system_theme,
