@@ -1098,7 +1098,7 @@ fn create_system_tray() -> SystemTray {
     let show = CustomMenuItem::new("show".to_string(), "ウィンドウを表示");
     let keybindings = CustomMenuItem::new("keybindings".to_string(), "キーバインド設定");
     let config = CustomMenuItem::new("config".to_string(), "設定ファイルを開く");
-    let about = CustomMenuItem::new("about".to_string(), "Finkeyについて");
+    let about = CustomMenuItem::new("about".to_string(), "About");
     let quit = CustomMenuItem::new("quit".to_string(), "終了");
 
     let tray_menu = SystemTrayMenu::new()

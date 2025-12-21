@@ -61,25 +61,25 @@ body {
 	box-shadow: 0 24px 80px var(--shadow-color);
 }
 
-/* ヘッダー */
-.header {
+/* メインコンテンツ */
+.main-content {
+	flex: 1;
 	display: flex;
-	justify-content: space-between;
+	flex-direction: column;
 	align-items: center;
-	padding: 12px 16px;
-	border-bottom: 1px solid var(--border-color);
-	background: rgba(255, 255, 255, 0.02);
+	justify-content: center;
+	padding: 24px;
+	text-align: center;
+	position: relative;
 	-webkit-app-region: drag;
 }
 
-.header-title {
-	font-size: 14px;
-	font-weight: 600;
-	color: var(--text-primary);
-}
-
+/* 閉じるボタン */
 .close-btn {
 	-webkit-app-region: no-drag;
+	position: absolute;
+	top: 12px;
+	right: 12px;
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -96,17 +96,6 @@ body {
 .close-btn:hover {
 	background: var(--bg-secondary);
 	color: var(--text-primary);
-}
-
-/* メインコンテンツ */
-.main-content {
-	flex: 1;
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	justify-content: center;
-	padding: 24px;
-	text-align: center;
 }
 
 .app-icon {
