@@ -1114,6 +1114,13 @@ fn create_system_tray() -> SystemTray {
 
 fn main() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_single_instance::init(|app, _argv, _cwd| {
+            // 2つ目のインスタンスが起動しようとした時、既存ウィンドウを表示
+            if let Some(window) = app.get_window("search") {
+                let _ = window.show();
+                let _ = window.set_focus();
+            }
+        }))
         .system_tray(create_system_tray())
         .on_system_tray_event(|app, event| match event {
             SystemTrayEvent::LeftClick { .. } => {
