@@ -1,78 +1,19 @@
 {
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Finkey",
+  "version": "0.4.0",
+  "identifier": "com.finkey.app",
   "build": {
     "beforeDevCommand": "npm run watch:ts",
     "beforeBuildCommand": "npm run build:ts",
-    "devPath": "../src",
-    "distDir": "../src",
-    "withGlobalTauri": true
+    "frontendDist": "../src"
   },
-  "package": {
-    "productName": "Finkey"
-  },
-  "tauri": {
+  "app": {
     "macOSPrivateApi": true,
-    "allowlist": {
-      "all": false,
-      "shell": {
-        "open": true
-      },
-      "window": {
-        "close": true,
-        "hide": true,
-        "show": true,
-        "center": true,
-        "setFocus": true,
-        "startDragging": true
-      },
-      "globalShortcut": {
-        "all": true
-      }
-    },
-    "updater": {
-      "active": true,
-      "dialog": true,
-      "endpoints": [
-        "https://github.com/a24fukuda/finkey/releases/latest/download/latest.json"
-      ],
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDk4Qzc4QUE4NjlCNjdCMjkKUldRcGU3WnBxSXJIbU84eDlOY3o2blcyM3VscGI5OGxRNEZoVHA0NGRRSXlObFllbzhyOEhDbnkK"
-    },
-    "bundle": {
-      "active": true,
-      "category": "Utility",
-      "copyright": "",
-      "deb": {
-        "depends": []
-      },
-      "externalBin": [],
-      "icon": [
-          "icons/32x32.png",
-          "icons/128x128.png",
-          "icons/128x128@2x.png",
-          "icons/icon.icns",
-          "icons/icon.ico"
-        ],
-      "identifier": "com.finkey.app",
-      "longDescription": "A Spotlight-like shortcut key finder for Windows and Mac",
-      "macOS": {
-        "entitlements": null,
-        "exceptionDomain": "",
-        "frameworks": [],
-        "providerShortName": null,
-        "signingIdentity": null
-      },
-      "resources": [],
-      "shortDescription": "Finkey - Shortcut Key Finder",
-      "targets": "all",
-      "windows": {
-        "certificateThumbprint": null,
-        "digestAlgorithm": "sha256",
-        "timestampUrl": ""
-      }
-    },
     "security": {
       "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'"
     },
-    "systemTray": {
+    "trayIcon": {
       "iconPath": "icons/32x32.png",
       "iconAsTemplate": true
     },
@@ -144,5 +85,39 @@
         "focus": true
       }
     ]
+  },
+  "bundle": {
+    "active": true,
+    "category": "Utility",
+    "copyright": "",
+    "linux": {
+      "deb": {
+        "depends": []
+      }
+    },
+    "externalBin": [],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "longDescription": "A Spotlight-like shortcut key finder for Windows and Mac",
+    "macOS": {
+      "entitlements": null,
+      "exceptionDomain": "",
+      "frameworks": [],
+      "providerShortName": null,
+      "signingIdentity": null
+    },
+    "resources": [],
+    "shortDescription": "Finkey - Shortcut Key Finder",
+    "targets": "all",
+    "windows": {
+      "certificateThumbprint": null,
+      "digestAlgorithm": "sha256",
+      "timestampUrl": ""
+    }
   }
 }

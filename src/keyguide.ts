@@ -1,13 +1,6 @@
 import { invoke, listen } from "./tauri-api";
 import { applyThemeFromSetting } from "./theme";
-
-// Tauri Window API の型
-interface TauriWindow {
-	appWindow?: {
-		startDragging: () => Promise<void>;
-		outerPosition: () => Promise<{ x: number; y: number }>;
-	};
-}
+import { getCurrentWindow } from "@tauri-apps/api/window";
 
 // DOM要素
 const appNameEl = document.getElementById("app-name") as HTMLElement;
@@ -104,15 +97,10 @@ async function closeOverlay(): Promise<void> {
 // ウィンドウ位置の保存（デバウンス用）
 let savePositionTimer: number | null = null;
 
-// Tauri Window APIを取得
-function getTauriWindow(): TauriWindow | undefined {
-	return (window.__TAURI__ as { window?: TauriWindow })?.window;
-}
-
 // ウィンドウのドラッグを開始
 async function startDragging(): Promise<void> {
 	try {
-		await getTauriWindow()?.appWindow?.startDragging();
+		await getCurrentWindow().startDragging();
 	} catch (_e) {
 		console.log("Failed to start dragging");
 	}
@@ -121,7 +109,7 @@ async function startDragging(): Promise<void> {
 // ウィンドウ位置を保存
 async function savePosition(): Promise<void> {
 	try {
-		const position = await getTauriWindow()?.appWindow?.outerPosition();
+		const position = await getCurrentWindow().outerPosition();
 		if (position) {
 			await invoke("save_overlay_position", { x: position.x, y: position.y });
 		}

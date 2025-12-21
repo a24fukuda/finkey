@@ -238,3 +238,6 @@ $RECYCLE.BIN/
 
 # Build output (TypeScript -> JavaScript)
 src/**/*.js
+
+# Tauri generated files
+src-tauri/gen/
