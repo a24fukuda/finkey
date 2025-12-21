@@ -125,6 +125,22 @@
         "skipTaskbar": false,
         "visible": false,
         "focus": true
+      },
+      {
+        "label": "about",
+        "url": "about.html",
+        "fullscreen": false,
+        "resizable": false,
+        "title": "Finkeyについて",
+        "width": 320,
+        "height": 360,
+        "center": true,
+        "decorations": false,
+        "transparent": true,
+        "alwaysOnTop": false,
+        "skipTaskbar": false,
+        "visible": false,
+        "focus": true
       }
     ]
   }
