@@ -38,6 +38,7 @@ const inputPlatformIcon = document.getElementById("input-platform-icon") as HTML
 const keybindingsTbody = document.getElementById("keybindings-tbody") as HTMLElement;
 const addKeybindingBtn = document.getElementById("add-keybinding-btn") as HTMLButtonElement;
 const resetBtn = document.getElementById("reset-btn") as HTMLButtonElement;
+const openFileBtn = document.getElementById("open-file-btn") as HTMLButtonElement;
 const cancelBtn = document.getElementById("cancel-btn") as HTMLButtonElement;
 const saveBtn = document.getElementById("save-btn") as HTMLButtonElement;
 
@@ -94,6 +95,7 @@ function setupEventListeners(): void {
 	deleteAppBtn.addEventListener("click", handleDeleteApp);
 	addKeybindingBtn.addEventListener("click", addKeybinding);
 	resetBtn.addEventListener("click", handleReset);
+	openFileBtn.addEventListener("click", handleOpenFile);
 	cancelBtn.addEventListener("click", handleCancel);
 	saveBtn.addEventListener("click", handleSave);
 
@@ -692,6 +694,16 @@ function handleDeleteApp(): void {
 		renderAppList();
 		showEditArea();
 	});
+}
+
+// 設定ファイルを開く
+async function handleOpenFile(): Promise<void> {
+	try {
+		await invoke("open_config_file");
+	} catch (e) {
+		console.error("Failed to open config file:", e);
+		alert("ファイルを開けませんでした");
+	}
 }
 
 // リセット
