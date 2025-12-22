@@ -1,6 +1,6 @@
+import { getCurrentWindow } from "@tauri-apps/api/window";
 import { invoke, listen } from "./tauri-api";
 import { applyThemeFromSetting } from "./theme";
-import { getCurrentWindow } from "@tauri-apps/api/window";
 
 // DOM要素
 const appNameEl = document.getElementById("app-name") as HTMLElement;

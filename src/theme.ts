@@ -40,7 +40,10 @@ export function applyTheme(setting?: ThemeSetting): void {
 	}
 
 	// data-theme-setting属性を設定（CSS切り替え用）
-	document.documentElement.setAttribute("data-theme-setting", currentThemeSetting);
+	document.documentElement.setAttribute(
+		"data-theme-setting",
+		currentThemeSetting,
+	);
 }
 
 // バックエンドからテーマ設定を読み込んで適用
@@ -72,11 +75,13 @@ export async function toggleTheme(): Promise<void> {
 
 // システムテーマ変更を監視
 export function setupSystemThemeListener(): void {
-	window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
-		if (currentThemeSetting === "system") {
-			applyTheme();
-		}
-	});
+	window
+		.matchMedia("(prefers-color-scheme: dark)")
+		.addEventListener("change", () => {
+			if (currentThemeSetting === "system") {
+				applyTheme();
+			}
+		});
 }
 
 // ウィンドウフォーカス時にテーマを再読み込み

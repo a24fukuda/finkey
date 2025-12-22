@@ -53,7 +53,7 @@ pub enum OsType {
 
 impl OsType {
     /// OS種別から表示名を取得
-    pub fn display_name(&self) -> &'static str {
+    pub const fn display_name(&self) -> &'static str {
         match self {
             Self::Windows => "Windows",
             Self::MacOS => "macOS",
@@ -61,7 +61,7 @@ impl OsType {
     }
 
     /// 現在のプラットフォームと一致するか
-    pub fn is_current_platform(&self) -> bool {
+    pub const fn is_current_platform(&self) -> bool {
         match self {
             Self::Windows => cfg!(target_os = "windows"),
             Self::MacOS => cfg!(target_os = "macos"),
@@ -94,28 +94,22 @@ impl AppConfig {
 
     /// 表示名を取得（osがあればOS名、なければname）
     pub fn get_name(&self) -> String {
-        if let Some(ref os) = self.os {
-            os.display_name().to_string()
-        } else {
-            self.name.clone().unwrap_or_default()
-        }
+        self.os
+            .as_ref()
+            .map_or_else(|| self.name.clone().unwrap_or_default(), |os| os.display_name().to_string())
     }
 
     /// バインド値のリストを取得（未設定の場合はnameを使用）
     pub fn get_binds(&self) -> Vec<String> {
-        match &self.bind {
-            Some(bind) => bind.get_binds(),
-            None => vec![self.get_name()],
-        }
+        self.bind
+            .as_ref()
+            .map_or_else(|| vec![self.get_name()], AppBind::get_binds)
     }
 
     /// 現在のプラットフォームで有効かどうか
     /// osが指定されていない場合は常に有効、指定されている場合は一致時のみ有効
     pub fn is_available(&self) -> bool {
-        match &self.os {
-            Some(os) => os.is_current_platform(),
-            None => true,
-        }
+        self.os.as_ref().is_none_or(OsType::is_current_platform)
     }
 }
 
@@ -290,9 +284,8 @@ fn get_settings_path() -> Option<PathBuf> {
 
 // アプリ設定を読み込む（キャッシュ付き）
 fn load_settings() -> AppSettings {
-    let path = match get_settings_path() {
-        Some(p) => p,
-        None => return AppSettings::default(),
+    let Some(path) = get_settings_path() else {
+        return AppSettings::default();
     };
 
     let current_modified = get_file_modified_time(&path);
@@ -365,12 +358,8 @@ fn get_file_modified_time(path: &PathBuf) -> Option<SystemTime> {
 
 // キーバインド設定を読み込む（キャッシュ付き）
 fn load_keybindings_config() -> Vec<AppConfig> {
-    let path = match get_keybindings_config_path() {
-        Some(p) => p,
-        None => {
-            let config = get_default_keybindings();
-            return config;
-        }
+    let Some(path) = get_keybindings_config_path() else {
+        return get_default_keybindings();
     };
 
     let current_modified = get_file_modified_time(&path);
@@ -471,8 +460,16 @@ mod active_window {
 
     /// アクティブなウィンドウの情報を取得（自分自身を除外）
     #[allow(unsafe_code)]
+    #[allow(clippy::cast_sign_loss)] // Windows APIの戻り値は正の値（len > 0チェック済み）
     pub fn get_active_window_info() -> Option<ActiveWindowInfo> {
-        // SAFETY: Windows APIの呼び出しに必要
+        // SAFETY: 以下のWindows API呼び出しは安全です：
+        // - GetForegroundWindow: 常に有効なHWNDまたはNULLを返す
+        // - GetWindowThreadProcessId: 有効なHWNDに対してプロセスIDを取得
+        // - GetCurrentProcessId: 常に現在のプロセスIDを返す
+        // - OpenProcess: 失敗時はエラーを返し、成功時は有効なハンドル
+        // - GetModuleBaseNameW: バッファサイズを指定して安全に呼び出し
+        // - CloseHandle: OpenProcessで取得したハンドルを正しく解放
+        // - GetWindowTextW: バッファサイズを事前に取得し、オーバーフローを防止
         unsafe {
             let hwnd: HWND = GetForegroundWindow();
             if hwnd.0.is_null() {
@@ -553,6 +550,8 @@ mod active_window {
     pub fn restore_focus_to_last_window() {
         if let Ok(last_hwnd) = LAST_ACTIVE_HWND.lock() {
             if let Some(hwnd_val) = *last_hwnd {
+                // SAFETY: SetForegroundWindowは無効なHWNDでも安全に失敗する
+                // HWNDはget_active_window_infoで取得した有効なウィンドウハンドル
                 unsafe {
                     let hwnd = HWND(hwnd_val as *mut std::ffi::c_void);
                     let _ = SetForegroundWindow(hwnd);
@@ -702,10 +701,8 @@ fn match_apps(info: &ActiveWindowInfo, apps: &[AppConfig]) -> Vec<NormalizedApp>
 #[tauri::command]
 fn get_matched_apps(info: Option<ActiveWindowInfo>) -> Vec<NormalizedApp> {
     let config = load_keybindings_config();
-    match info {
-        Some(ref window_info) => match_apps(window_info, &config),
-        None => vec![],
-    }
+    info.as_ref()
+        .map_or_else(Vec::new, |window_info| match_apps(window_info, &config))
 }
 
 // ショートカット一覧を取得するコマンド
@@ -716,7 +713,7 @@ fn get_shortcuts() -> Vec<NormalizedShortcut> {
     config
         .into_iter()
         // 現在のプラットフォームで有効なアプリのみ
-        .filter(|app| app.is_available())
+        .filter(AppConfig::is_available)
         .flat_map(|app| {
             let app_name = app.get_name();
             let app_icon = app.get_icon();
@@ -818,10 +815,10 @@ fn set_theme_setting(theme: String) -> Result<(), String> {
 // システムテーマを取得（ウィンドウから）
 #[tauri::command]
 fn get_system_theme(window: WebviewWindow) -> String {
-    match window.theme() {
-        Ok(tauri::Theme::Dark) => "dark".to_string(),
-        Ok(tauri::Theme::Light) => "light".to_string(),
-        _ => "light".to_string(),
+    if matches!(window.theme(), Ok(tauri::Theme::Dark)) {
+        "dark".to_string()
+    } else {
+        "light".to_string()
     }
 }
 
@@ -836,6 +833,7 @@ struct OverlayPayload {
 }
 
 /// オーバーレイウィンドウの幅を計算
+#[allow(clippy::cast_precision_loss)] // ステップ数・区切り文字数は小さな整数なので精度損失なし
 fn calculate_overlay_width(shortcut_key: &str) -> f64 {
     const BASE_WIDTH: f64 = 150.0;
     const MODIFIER_WIDTH: f64 = 50.0;
@@ -891,6 +889,7 @@ fn calculate_overlay_width(shortcut_key: &str) -> f64 {
 
 /// Windowsでフォーカスを奪わずにウィンドウを表示
 #[cfg(target_os = "windows")]
+#[allow(unsafe_code)]
 fn show_window_no_focus(window: &WebviewWindow) {
     use windows::Win32::UI::WindowsAndMessaging::{
         SetWindowPos, ShowWindow, HWND_TOPMOST, SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOSIZE,
@@ -899,9 +898,13 @@ fn show_window_no_focus(window: &WebviewWindow) {
 
     // HWNDを取得
     if let Ok(hwnd) = window.hwnd() {
-        let hwnd = windows::Win32::Foundation::HWND(hwnd.0 as _);
+        let hwnd = windows::Win32::Foundation::HWND(hwnd.0.cast());
 
-        // SAFETY: Windows APIの呼び出し
+        // SAFETY: 以下のWindows API呼び出しは安全です：
+        // - ShowWindow: 有効なHWND（Tauriから取得）に対してウィンドウの表示状態を変更
+        //   SW_SHOWNOACTIVATEはフォーカスを移動せずにウィンドウを表示
+        // - SetWindowPos: HWND_TOPMOSTでZオーダーを最前面に設定
+        //   SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZEにより位置/サイズ変更なし
         unsafe {
             // SW_SHOWNOACTIVATEでフォーカスを奪わずに表示
             let _ = ShowWindow(hwnd, SW_SHOWNOACTIVATE);
@@ -927,6 +930,7 @@ fn show_window_no_focus(window: &WebviewWindow) {
 
 // オーバーレイウィンドウを表示
 #[tauri::command]
+#[allow(clippy::unnecessary_wraps)] // フロントエンドとの互換性のため Result を返す
 fn show_overlay(
     app: AppHandle,
     app_name: String,
@@ -991,8 +995,11 @@ fn show_overlay(
                 {
                     if let Ok(hwnd) = overlay.hwnd() {
                         use windows::Win32::UI::WindowsAndMessaging::{ShowWindow, SW_HIDE};
+                        // SAFETY: ShowWindowは有効なHWND（Tauriから取得）に対して
+                        // SW_HIDEでウィンドウを非表示にする。失敗しても安全。
+                        #[allow(unsafe_code)]
                         unsafe {
-                            let hwnd = windows::Win32::Foundation::HWND(hwnd.0 as _);
+                            let hwnd = windows::Win32::Foundation::HWND(hwnd.0.cast());
                             let _ = ShowWindow(hwnd, SW_HIDE);
                         }
                     }
@@ -1039,15 +1046,16 @@ fn reset_keybindings() -> Result<Vec<AppConfig>, String> {
 // キーバインド設定ウィンドウを開く
 #[tauri::command]
 fn open_keybindings_window(app: AppHandle) -> Result<(), String> {
-    if let Some(window) = app.get_webview_window("keybindings") {
-        // ウィンドウを中央に配置して表示
-        let _ = window.center();
-        let _ = window.show();
-        let _ = window.set_focus();
-        Ok(())
-    } else {
-        Err("キーバインド設定ウィンドウが見つかりません".to_string())
-    }
+    app.get_webview_window("keybindings").map_or_else(
+        || Err("キーバインド設定ウィンドウが見つかりません".to_string()),
+        |window| {
+            // ウィンドウを中央に配置して表示
+            let _ = window.center();
+            let _ = window.show();
+            let _ = window.set_focus();
+            Ok(())
+        },
+    )
 }
 
 // キーバインド設定ウィンドウを閉じる（非表示にする）
@@ -1067,14 +1075,15 @@ fn get_app_version() -> String {
 // バージョン情報ウィンドウを開く
 #[tauri::command]
 fn open_about_window(app: AppHandle) -> Result<(), String> {
-    if let Some(window) = app.get_webview_window("about") {
-        let _ = window.center();
-        let _ = window.show();
-        let _ = window.set_focus();
-        Ok(())
-    } else {
-        Err("バージョン情報ウィンドウが見つかりません".to_string())
-    }
+    app.get_webview_window("about").map_or_else(
+        || Err("バージョン情報ウィンドウが見つかりません".to_string()),
+        |window| {
+            let _ = window.center();
+            let _ = window.show();
+            let _ = window.set_focus();
+            Ok(())
+        },
+    )
 }
 
 // バージョン情報ウィンドウを閉じる（非表示にする）
@@ -1097,6 +1106,7 @@ fn save_overlay_position(x: i32, y: i32) -> Result<(), String> {
 }
 
 /// ホットキー文字列をパースしてShortcut構造体に変換
+#[allow(clippy::cognitive_complexity)] // キーコードマッピングのため複雑になるが明確な構造
 fn parse_hotkey(hotkey: &str) -> Option<Shortcut> {
     let normalized = normalize_hotkey_for_tauri(hotkey);
     let parts: Vec<&str> = normalized.split('+').collect();
@@ -1185,6 +1195,7 @@ fn parse_hotkey(hotkey: &str) -> Option<Shortcut> {
     key_code.map(|code| Shortcut::new(Some(modifiers), code))
 }
 
+#[allow(clippy::too_many_lines)] // Tauri 2.0のセットアップパターンに従う
 fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(|app, _argv, _cwd| {
@@ -1256,7 +1267,8 @@ fn main() {
                         }
                     }
                     "quit" => {
-                        std::process::exit(0);
+                        // Tauri 2.0: AppHandle::exit() でアプリケーションを正常終了
+                        app.exit(0);
                     }
                     _ => {}
                 })
@@ -1271,10 +1283,9 @@ fn main() {
 
             // グローバルホットキーを登録
             if let Some(shortcut) = parse_hotkey(hotkey) {
-                let app_handle_for_shortcut = app_handle.clone();
                 if let Err(e) = app.global_shortcut().on_shortcut(shortcut, move |_app, _shortcut, event| {
                     if event.state == ShortcutState::Pressed {
-                        toggle_window(&app_handle_for_shortcut);
+                        toggle_window(&app_handle);
                     }
                 }) {
                     eprintln!("Warning: Failed to register global hotkey ({hotkey}): {e:?}");
