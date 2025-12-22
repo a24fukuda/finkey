@@ -5,7 +5,7 @@ Finkeyの全ての変更履歴を記録します。
 フォーマットは[Keep a Changelog](https://keepachangelog.com/ja/1.0.0/)に基づき、
 バージョニングは[Semantic Versioning](https://semver.org/lang/ja/)に準拠しています。
 
-## [Unreleased]
+## [0.4.1] - 2025-12-23
 
 ### Changed
 
@@ -108,6 +108,7 @@ Finkeyの全ての変更履歴を記録します。
 - TypeScript導入
 - Biome（リンター/フォーマッター）導入
 
+[0.4.1]: https://github.com/a24fukuda/finkey/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/a24fukuda/finkey/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/a24fukuda/finkey/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/a24fukuda/finkey/compare/v0.2.0...v0.2.1
