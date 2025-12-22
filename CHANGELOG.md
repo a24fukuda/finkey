@@ -5,6 +5,19 @@ Finkeyの全ての変更履歴を記録します。
 フォーマットは[Keep a Changelog](https://keepachangelog.com/ja/1.0.0/)に基づき、
 バージョニングは[Semantic Versioning](https://semver.org/lang/ja/)に準拠しています。
 
+## [Unreleased]
+
+### Changed
+
+- Tauri 2.0への移行
+  - パフォーマンスと安定性の向上
+  - macOSでの透明ウィンドウの安定性改善
+  - 新しいプラグインアーキテクチャへの対応
+
+### Removed
+
+- 自動更新機能を一時的に削除（Tauri 2.0のプラグイン形式で再実装予定）
+
 ## [0.4.0] - 2025-12-21
 
 ### Added
