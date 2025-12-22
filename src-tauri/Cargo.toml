@@ -8,23 +8,15 @@ repository = ""
 edition = "2021"
 
 [build-dependencies]
-tauri-build = { version = "1.5", features = [] }
+tauri-build = { version = "2", features = [] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 
 [dependencies]
-tauri = { version = "1.6", features = [ "updater",
-    "shell-open",
-    "window-close",
-    "window-hide",
-    "window-show",
-    "window-center",
-    "window-set-focus",
-    "window-start-dragging",
-    "global-shortcut-all",
-    "system-tray"
-] }
-tauri-plugin-single-instance = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "v1" }
+tauri = { version = "2", features = ["macos-private-api", "tray-icon"] }
+tauri-plugin-single-instance = "2"
+tauri-plugin-shell = "2"
+tauri-plugin-global-shortcut = "2"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 dirs = "5.0"

@@ -9,9 +9,11 @@ use std::sync::{Mutex, OnceLock};
 use std::thread;
 use std::time::{Duration, SystemTime};
 use tauri::{
-    AppHandle, CustomMenuItem, GlobalShortcutManager, Manager, SystemTray, SystemTrayEvent,
-    SystemTrayMenu, SystemTrayMenuItem, WindowEvent,
+    menu::{Menu, MenuItem},
+    tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
+    AppHandle, Emitter, Manager, WebviewWindow, WindowEvent,
 };
+use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
 
 // バインド設定（文字列または配列）
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -51,7 +53,7 @@ pub enum OsType {
 
 impl OsType {
     /// OS種別から表示名を取得
-    pub fn display_name(&self) -> &'static str {
+    pub const fn display_name(&self) -> &'static str {
         match self {
             Self::Windows => "Windows",
             Self::MacOS => "macOS",
@@ -59,7 +61,7 @@ impl OsType {
     }
 
     /// 現在のプラットフォームと一致するか
-    pub fn is_current_platform(&self) -> bool {
+    pub const fn is_current_platform(&self) -> bool {
         match self {
             Self::Windows => cfg!(target_os = "windows"),
             Self::MacOS => cfg!(target_os = "macos"),
@@ -92,28 +94,22 @@ impl AppConfig {
 
     /// 表示名を取得（osがあればOS名、なければname）
     pub fn get_name(&self) -> String {
-        if let Some(ref os) = self.os {
-            os.display_name().to_string()
-        } else {
-            self.name.clone().unwrap_or_default()
-        }
+        self.os
+            .as_ref()
+            .map_or_else(|| self.name.clone().unwrap_or_default(), |os| os.display_name().to_string())
     }
 
     /// バインド値のリストを取得（未設定の場合はnameを使用）
     pub fn get_binds(&self) -> Vec<String> {
-        match &self.bind {
-            Some(bind) => bind.get_binds(),
-            None => vec![self.get_name()],
-        }
+        self.bind
+            .as_ref()
+            .map_or_else(|| vec![self.get_name()], AppBind::get_binds)
     }
 
     /// 現在のプラットフォームで有効かどうか
     /// osが指定されていない場合は常に有効、指定されている場合は一致時のみ有効
     pub fn is_available(&self) -> bool {
-        match &self.os {
-            Some(os) => os.is_current_platform(),
-            None => true,
-        }
+        self.os.as_ref().is_none_or(OsType::is_current_platform)
     }
 }
 
@@ -288,9 +284,8 @@ fn get_settings_path() -> Option<PathBuf> {
 
 // アプリ設定を読み込む（キャッシュ付き）
 fn load_settings() -> AppSettings {
-    let path = match get_settings_path() {
-        Some(p) => p,
-        None => return AppSettings::default(),
+    let Some(path) = get_settings_path() else {
+        return AppSettings::default();
     };
 
     let current_modified = get_file_modified_time(&path);
@@ -363,12 +358,8 @@ fn get_file_modified_time(path: &PathBuf) -> Option<SystemTime> {
 
 // キーバインド設定を読み込む（キャッシュ付き）
 fn load_keybindings_config() -> Vec<AppConfig> {
-    let path = match get_keybindings_config_path() {
-        Some(p) => p,
-        None => {
-            let config = get_default_keybindings();
-            return config;
-        }
+    let Some(path) = get_keybindings_config_path() else {
+        return get_default_keybindings();
     };
 
     let current_modified = get_file_modified_time(&path);
@@ -469,8 +460,16 @@ mod active_window {
 
     /// アクティブなウィンドウの情報を取得（自分自身を除外）
     #[allow(unsafe_code)]
+    #[allow(clippy::cast_sign_loss)] // Windows APIの戻り値は正の値（len > 0チェック済み）
     pub fn get_active_window_info() -> Option<ActiveWindowInfo> {
-        // SAFETY: Windows APIの呼び出しに必要
+        // SAFETY: 以下のWindows API呼び出しは安全です：
+        // - GetForegroundWindow: 常に有効なHWNDまたはNULLを返す
+        // - GetWindowThreadProcessId: 有効なHWNDに対してプロセスIDを取得
+        // - GetCurrentProcessId: 常に現在のプロセスIDを返す
+        // - OpenProcess: 失敗時はエラーを返し、成功時は有効なハンドル
+        // - GetModuleBaseNameW: バッファサイズを指定して安全に呼び出し
+        // - CloseHandle: OpenProcessで取得したハンドルを正しく解放
+        // - GetWindowTextW: バッファサイズを事前に取得し、オーバーフローを防止
         unsafe {
             let hwnd: HWND = GetForegroundWindow();
             if hwnd.0.is_null() {
@@ -551,6 +550,8 @@ mod active_window {
     pub fn restore_focus_to_last_window() {
         if let Ok(last_hwnd) = LAST_ACTIVE_HWND.lock() {
             if let Some(hwnd_val) = *last_hwnd {
+                // SAFETY: SetForegroundWindowは無効なHWNDでも安全に失敗する
+                // HWNDはget_active_window_infoで取得した有効なウィンドウハンドル
                 unsafe {
                     let hwnd = HWND(hwnd_val as *mut std::ffi::c_void);
                     let _ = SetForegroundWindow(hwnd);
@@ -598,7 +599,7 @@ fn get_last_active_app() -> Option<ActiveWindowInfo> {
 
 // ウィンドウの表示/非表示を切り替え
 fn toggle_window(app: &AppHandle) {
-    if let Some(window) = app.get_window("search") {
+    if let Some(window) = app.get_webview_window("search") {
         if window.is_visible().unwrap_or(false) {
             WINDOW_VISIBLE.store(false, Ordering::SeqCst);
             let _ = window.hide();
@@ -618,7 +619,7 @@ fn toggle_window(app: &AppHandle) {
 
 // ウィンドウを非表示
 fn hide_window(app: &AppHandle) {
-    if let Some(window) = app.get_window("search") {
+    if let Some(window) = app.get_webview_window("search") {
         WINDOW_VISIBLE.store(false, Ordering::SeqCst);
         let _ = window.hide();
         let _ = window.emit("window-hidden", ());
@@ -700,10 +701,8 @@ fn match_apps(info: &ActiveWindowInfo, apps: &[AppConfig]) -> Vec<NormalizedApp>
 #[tauri::command]
 fn get_matched_apps(info: Option<ActiveWindowInfo>) -> Vec<NormalizedApp> {
     let config = load_keybindings_config();
-    match info {
-        Some(ref window_info) => match_apps(window_info, &config),
-        None => vec![],
-    }
+    info.as_ref()
+        .map_or_else(Vec::new, |window_info| match_apps(window_info, &config))
 }
 
 // ショートカット一覧を取得するコマンド
@@ -714,7 +713,7 @@ fn get_shortcuts() -> Vec<NormalizedShortcut> {
     config
         .into_iter()
         // 現在のプラットフォームで有効なアプリのみ
-        .filter(|app| app.is_available())
+        .filter(AppConfig::is_available)
         .flat_map(|app| {
             let app_name = app.get_name();
             let app_icon = app.get_icon();
@@ -815,11 +814,11 @@ fn set_theme_setting(theme: String) -> Result<(), String> {
 
 // システムテーマを取得（ウィンドウから）
 #[tauri::command]
-fn get_system_theme(window: tauri::Window) -> String {
-    match window.theme() {
-        Ok(tauri::Theme::Dark) => "dark".to_string(),
-        Ok(tauri::Theme::Light) => "light".to_string(),
-        _ => "light".to_string(),
+fn get_system_theme(window: WebviewWindow) -> String {
+    if matches!(window.theme(), Ok(tauri::Theme::Dark)) {
+        "dark".to_string()
+    } else {
+        "light".to_string()
     }
 }
 
@@ -834,6 +833,7 @@ struct OverlayPayload {
 }
 
 /// オーバーレイウィンドウの幅を計算
+#[allow(clippy::cast_precision_loss)] // ステップ数・区切り文字数は小さな整数なので精度損失なし
 fn calculate_overlay_width(shortcut_key: &str) -> f64 {
     const BASE_WIDTH: f64 = 150.0;
     const MODIFIER_WIDTH: f64 = 50.0;
@@ -889,7 +889,8 @@ fn calculate_overlay_width(shortcut_key: &str) -> f64 {
 
 /// Windowsでフォーカスを奪わずにウィンドウを表示
 #[cfg(target_os = "windows")]
-fn show_window_no_focus(window: &tauri::Window) {
+#[allow(unsafe_code)]
+fn show_window_no_focus(window: &WebviewWindow) {
     use windows::Win32::UI::WindowsAndMessaging::{
         SetWindowPos, ShowWindow, HWND_TOPMOST, SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOSIZE,
         SW_SHOWNOACTIVATE,
@@ -897,9 +898,13 @@ fn show_window_no_focus(window: &tauri::Window) {
 
     // HWNDを取得
     if let Ok(hwnd) = window.hwnd() {
-        let hwnd = windows::Win32::Foundation::HWND(hwnd.0 as _);
+        let hwnd = windows::Win32::Foundation::HWND(hwnd.0.cast());
 
-        // SAFETY: Windows APIの呼び出し
+        // SAFETY: 以下のWindows API呼び出しは安全です：
+        // - ShowWindow: 有効なHWND（Tauriから取得）に対してウィンドウの表示状態を変更
+        //   SW_SHOWNOACTIVATEはフォーカスを移動せずにウィンドウを表示
+        // - SetWindowPos: HWND_TOPMOSTでZオーダーを最前面に設定
+        //   SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZEにより位置/サイズ変更なし
         unsafe {
             // SW_SHOWNOACTIVATEでフォーカスを奪わずに表示
             let _ = ShowWindow(hwnd, SW_SHOWNOACTIVATE);
@@ -919,12 +924,13 @@ fn show_window_no_focus(window: &tauri::Window) {
 }
 
 #[cfg(not(target_os = "windows"))]
-fn show_window_no_focus(window: &tauri::Window) {
+fn show_window_no_focus(window: &WebviewWindow) {
     let _ = window.show();
 }
 
 // オーバーレイウィンドウを表示
 #[tauri::command]
+#[allow(clippy::unnecessary_wraps)] // フロントエンドとの互換性のため Result を返す
 fn show_overlay(
     app: AppHandle,
     app_name: String,
@@ -940,13 +946,13 @@ fn show_overlay(
     };
 
     // メインウィンドウを非表示
-    if let Some(main_window) = app.get_window("search") {
+    if let Some(main_window) = app.get_webview_window("search") {
         WINDOW_VISIBLE.store(false, Ordering::SeqCst);
         let _ = main_window.hide();
     }
 
     // オーバーレイウィンドウを表示（フォーカスは設定しない）
-    if let Some(overlay_window) = app.get_window("keyguide") {
+    if let Some(overlay_window) = app.get_webview_window("keyguide") {
         // ウィンドウ幅を計算して設定
         let width = calculate_overlay_width(&shortcut_key);
         let _ = overlay_window.set_size(tauri::Size::Logical(tauri::LogicalSize {
@@ -983,14 +989,17 @@ fn show_overlay(
         // Rust側でタイマーを管理（フォーカスがなくてもタイマーが動作するように）
         thread::spawn(move || {
             thread::sleep(Duration::from_secs(u64::from(duration)));
-            if let Some(overlay) = app.get_window("keyguide") {
+            if let Some(overlay) = app.get_webview_window("keyguide") {
                 // Windows API で直接非表示にする（Tauriのhide()が効かない場合の対策）
                 #[cfg(target_os = "windows")]
                 {
                     if let Ok(hwnd) = overlay.hwnd() {
                         use windows::Win32::UI::WindowsAndMessaging::{ShowWindow, SW_HIDE};
+                        // SAFETY: ShowWindowは有効なHWND（Tauriから取得）に対して
+                        // SW_HIDEでウィンドウを非表示にする。失敗しても安全。
+                        #[allow(unsafe_code)]
                         unsafe {
-                            let hwnd = windows::Win32::Foundation::HWND(hwnd.0 as _);
+                            let hwnd = windows::Win32::Foundation::HWND(hwnd.0.cast());
                             let _ = ShowWindow(hwnd, SW_HIDE);
                         }
                     }
@@ -1009,7 +1018,7 @@ fn show_overlay(
 // オーバーレイウィンドウを非表示
 #[tauri::command]
 fn hide_overlay(app: AppHandle) {
-    if let Some(overlay_window) = app.get_window("keyguide") {
+    if let Some(overlay_window) = app.get_webview_window("keyguide") {
         let _ = overlay_window.hide();
     }
 }
@@ -1037,21 +1046,22 @@ fn reset_keybindings() -> Result<Vec<AppConfig>, String> {
 // キーバインド設定ウィンドウを開く
 #[tauri::command]
 fn open_keybindings_window(app: AppHandle) -> Result<(), String> {
-    if let Some(window) = app.get_window("keybindings") {
-        // ウィンドウを中央に配置して表示
-        let _ = window.center();
-        let _ = window.show();
-        let _ = window.set_focus();
-        Ok(())
-    } else {
-        Err("キーバインド設定ウィンドウが見つかりません".to_string())
-    }
+    app.get_webview_window("keybindings").map_or_else(
+        || Err("キーバインド設定ウィンドウが見つかりません".to_string()),
+        |window| {
+            // ウィンドウを中央に配置して表示
+            let _ = window.center();
+            let _ = window.show();
+            let _ = window.set_focus();
+            Ok(())
+        },
+    )
 }
 
 // キーバインド設定ウィンドウを閉じる（非表示にする）
 #[tauri::command]
 fn close_keybindings_window(app: AppHandle) {
-    if let Some(window) = app.get_window("keybindings") {
+    if let Some(window) = app.get_webview_window("keybindings") {
         let _ = window.hide();
     }
 }
@@ -1065,20 +1075,21 @@ fn get_app_version() -> String {
 // バージョン情報ウィンドウを開く
 #[tauri::command]
 fn open_about_window(app: AppHandle) -> Result<(), String> {
-    if let Some(window) = app.get_window("about") {
-        let _ = window.center();
-        let _ = window.show();
-        let _ = window.set_focus();
-        Ok(())
-    } else {
-        Err("バージョン情報ウィンドウが見つかりません".to_string())
-    }
+    app.get_webview_window("about").map_or_else(
+        || Err("バージョン情報ウィンドウが見つかりません".to_string()),
+        |window| {
+            let _ = window.center();
+            let _ = window.show();
+            let _ = window.set_focus();
+            Ok(())
+        },
+    )
 }
 
 // バージョン情報ウィンドウを閉じる（非表示にする）
 #[tauri::command]
 fn close_about_window(app: AppHandle) {
-    if let Some(window) = app.get_window("about") {
+    if let Some(window) = app.get_webview_window("about") {
         let _ = window.hide();
     }
 }
@@ -1094,116 +1105,224 @@ fn save_overlay_position(x: i32, y: i32) -> Result<(), String> {
     save_settings(&settings)
 }
 
-fn create_system_tray() -> SystemTray {
-    let show = CustomMenuItem::new("show".to_string(), "ウィンドウを表示");
-    let keybindings = CustomMenuItem::new("keybindings".to_string(), "キーバインド設定");
-    let config = CustomMenuItem::new("config".to_string(), "設定ファイルを開く");
-    let about = CustomMenuItem::new("about".to_string(), "About");
-    let quit = CustomMenuItem::new("quit".to_string(), "終了");
+/// ホットキー文字列をパースしてShortcut構造体に変換
+#[allow(clippy::cognitive_complexity)] // キーコードマッピングのため複雑になるが明確な構造
+fn parse_hotkey(hotkey: &str) -> Option<Shortcut> {
+    let normalized = normalize_hotkey_for_tauri(hotkey);
+    let parts: Vec<&str> = normalized.split('+').collect();
 
-    let tray_menu = SystemTrayMenu::new()
-        .add_item(show)
-        .add_item(keybindings)
-        .add_item(config)
-        .add_native_item(SystemTrayMenuItem::Separator)
-        .add_item(about)
-        .add_item(quit);
+    if parts.is_empty() {
+        return None;
+    }
 
-    SystemTray::new().with_menu(tray_menu)
+    let mut modifiers = Modifiers::empty();
+    let mut key_code: Option<Code> = None;
+
+    for part in parts {
+        let part_lower = part.to_lowercase();
+        match part_lower.as_str() {
+            "ctrl" | "control" => modifiers |= Modifiers::CONTROL,
+            "shift" => modifiers |= Modifiers::SHIFT,
+            "alt" | "option" => modifiers |= Modifiers::ALT,
+            "cmd" | "command" | "super" | "win" | "meta" => modifiers |= Modifiers::META,
+            _ => {
+                // キーコードを解析
+                key_code = match part_lower.as_str() {
+                    "a" => Some(Code::KeyA),
+                    "b" => Some(Code::KeyB),
+                    "c" => Some(Code::KeyC),
+                    "d" => Some(Code::KeyD),
+                    "e" => Some(Code::KeyE),
+                    "f" => Some(Code::KeyF),
+                    "g" => Some(Code::KeyG),
+                    "h" => Some(Code::KeyH),
+                    "i" => Some(Code::KeyI),
+                    "j" => Some(Code::KeyJ),
+                    "k" => Some(Code::KeyK),
+                    "l" => Some(Code::KeyL),
+                    "m" => Some(Code::KeyM),
+                    "n" => Some(Code::KeyN),
+                    "o" => Some(Code::KeyO),
+                    "p" => Some(Code::KeyP),
+                    "q" => Some(Code::KeyQ),
+                    "r" => Some(Code::KeyR),
+                    "s" => Some(Code::KeyS),
+                    "t" => Some(Code::KeyT),
+                    "u" => Some(Code::KeyU),
+                    "v" => Some(Code::KeyV),
+                    "w" => Some(Code::KeyW),
+                    "x" => Some(Code::KeyX),
+                    "y" => Some(Code::KeyY),
+                    "z" => Some(Code::KeyZ),
+                    "0" => Some(Code::Digit0),
+                    "1" => Some(Code::Digit1),
+                    "2" => Some(Code::Digit2),
+                    "3" => Some(Code::Digit3),
+                    "4" => Some(Code::Digit4),
+                    "5" => Some(Code::Digit5),
+                    "6" => Some(Code::Digit6),
+                    "7" => Some(Code::Digit7),
+                    "8" => Some(Code::Digit8),
+                    "9" => Some(Code::Digit9),
+                    "space" => Some(Code::Space),
+                    "enter" | "return" => Some(Code::Enter),
+                    "escape" | "esc" => Some(Code::Escape),
+                    "tab" => Some(Code::Tab),
+                    "backspace" => Some(Code::Backspace),
+                    "delete" => Some(Code::Delete),
+                    "up" => Some(Code::ArrowUp),
+                    "down" => Some(Code::ArrowDown),
+                    "left" => Some(Code::ArrowLeft),
+                    "right" => Some(Code::ArrowRight),
+                    "f1" => Some(Code::F1),
+                    "f2" => Some(Code::F2),
+                    "f3" => Some(Code::F3),
+                    "f4" => Some(Code::F4),
+                    "f5" => Some(Code::F5),
+                    "f6" => Some(Code::F6),
+                    "f7" => Some(Code::F7),
+                    "f8" => Some(Code::F8),
+                    "f9" => Some(Code::F9),
+                    "f10" => Some(Code::F10),
+                    "f11" => Some(Code::F11),
+                    "f12" => Some(Code::F12),
+                    _ => None,
+                };
+            }
+        }
+    }
+
+    key_code.map(|code| Shortcut::new(Some(modifiers), code))
 }
 
+#[allow(clippy::too_many_lines)] // Tauri 2.0のセットアップパターンに従う
 fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(|app, _argv, _cwd| {
             // 2つ目のインスタンスが起動しようとした時、既存ウィンドウを表示
-            if let Some(window) = app.get_window("search") {
+            if let Some(window) = app.get_webview_window("search") {
                 let _ = window.show();
                 let _ = window.set_focus();
             }
         }))
-        .system_tray(create_system_tray())
-        .on_system_tray_event(|app, event| match event {
-            SystemTrayEvent::LeftClick { .. } => {
-                toggle_window(app);
-            }
-            SystemTrayEvent::MenuItemClick { id, .. } => match id.as_str() {
-                "show" => {
-                    toggle_window(app);
-                }
-                "keybindings" => {
-                    if let Some(window) = app.get_window("keybindings") {
-                        let _ = window.center();
-                        let _ = window.show();
-                        let _ = window.set_focus();
-                    }
-                }
-                "config" => {
-                    let _ = open_config_file();
-                }
-                "about" => {
-                    if let Some(window) = app.get_window("about") {
-                        let _ = window.center();
-                        let _ = window.show();
-                        let _ = window.set_focus();
-                    }
-                }
-                "quit" => {
-                    std::process::exit(0);
-                }
-                _ => {}
-            },
-            _ => {}
-        })
+        .plugin(tauri_plugin_shell::init())
+        .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .setup(|app| {
-            let app_handle = app.handle();
+            let app_handle = app.handle().clone();
+
+            // システムトレイを設定
+            let show_item = MenuItem::with_id(app, "show", "ウィンドウを表示", true, None::<&str>)?;
+            let keybindings_item =
+                MenuItem::with_id(app, "keybindings", "キーバインド設定", true, None::<&str>)?;
+            let config_item =
+                MenuItem::with_id(app, "config", "設定ファイルを開く", true, None::<&str>)?;
+            let about_item = MenuItem::with_id(app, "about", "About", true, None::<&str>)?;
+            let quit_item = MenuItem::with_id(app, "quit", "終了", true, None::<&str>)?;
+
+            let menu = Menu::with_items(
+                app,
+                &[
+                    &show_item,
+                    &keybindings_item,
+                    &config_item,
+                    &about_item,
+                    &quit_item,
+                ],
+            )?;
+
+            let app_handle_for_tray = app_handle.clone();
+            TrayIconBuilder::new()
+                .icon(app.default_window_icon().unwrap().clone())
+                .icon_as_template(true)
+                .menu(&menu)
+                .on_tray_icon_event(move |_tray, event| {
+                    if let TrayIconEvent::Click {
+                        button: MouseButton::Left,
+                        button_state: MouseButtonState::Up,
+                        ..
+                    } = event
+                    {
+                        toggle_window(&app_handle_for_tray);
+                    }
+                })
+                .on_menu_event(move |app, event| match event.id.as_ref() {
+                    "show" => {
+                        toggle_window(app);
+                    }
+                    "keybindings" => {
+                        if let Some(window) = app.get_webview_window("keybindings") {
+                            let _ = window.center();
+                            let _ = window.show();
+                            let _ = window.set_focus();
+                        }
+                    }
+                    "config" => {
+                        let _ = open_config_file();
+                    }
+                    "about" => {
+                        if let Some(window) = app.get_webview_window("about") {
+                            let _ = window.center();
+                            let _ = window.show();
+                            let _ = window.set_focus();
+                        }
+                    }
+                    "quit" => {
+                        // Tauri 2.0: AppHandle::exit() でアプリケーションを正常終了
+                        app.exit(0);
+                    }
+                    _ => {}
+                })
+                .build(app)?;
 
             // バックグラウンドでアクティブウィンドウを監視開始
             start_active_window_monitor();
 
-            // 設定からホットキーを読み込み（スペースあり/なし両方対応）
+            // 設定からホットキーを読み込み
             let settings = load_settings();
-            let hotkey = normalize_hotkey_for_tauri(&settings.hotkey);
+            let hotkey = &settings.hotkey;
 
             // グローバルホットキーを登録
-            let app_handle_clone = app_handle.clone();
-            if let Err(e) = app.global_shortcut_manager().register(&hotkey, move || {
-                toggle_window(&app_handle_clone);
-            }) {
-                eprintln!("Warning: Failed to register global hotkey ({hotkey}): {e:?}");
+            if let Some(shortcut) = parse_hotkey(hotkey) {
+                if let Err(e) = app.global_shortcut().on_shortcut(shortcut, move |_app, _shortcut, event| {
+                    if event.state == ShortcutState::Pressed {
+                        toggle_window(&app_handle);
+                    }
+                }) {
+                    eprintln!("Warning: Failed to register global hotkey ({hotkey}): {e:?}");
+                }
+            } else {
+                eprintln!("Warning: Failed to parse hotkey: {hotkey}");
             }
 
             // 初期表示
-            if let Some(window) = app.get_window("search") {
+            if let Some(window) = app.get_webview_window("search") {
                 WINDOW_VISIBLE.store(true, Ordering::SeqCst);
                 let _ = window.center();
                 let _ = window.show();
                 let _ = window.set_focus();
-                // devtoolsを閉じる
-                #[cfg(debug_assertions)]
-                window.close_devtools();
             }
 
             Ok(())
         })
-        .on_window_event(|event| {
+        .on_window_event(|window, event| {
             // 検索ウィンドウのみ処理（キーガイドウィンドウは除外）
-            if event.window().label() != "search" {
+            if window.label() != "search" {
                 return;
             }
 
-            match event.event() {
+            match event {
                 // フォーカスを失ったらウィンドウを非表示
                 WindowEvent::Focused(focused) => {
                     if !focused {
                         WINDOW_VISIBLE.store(false, Ordering::SeqCst);
-                        let _ = event.window().hide();
+                        let _ = window.hide();
                     }
                 }
                 // 閉じるボタンでアプリを終了せず、ウィンドウを非表示にする
                 WindowEvent::CloseRequested { api, .. } => {
                     api.prevent_close();
                     WINDOW_VISIBLE.store(false, Ordering::SeqCst);
-                    let _ = event.window().hide();
+                    let _ = window.hide();
                 }
                 _ => {}
             }

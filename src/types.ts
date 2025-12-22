@@ -1,6 +1,6 @@
 // Tauri バックエンドの型定義
 
-import { type OsTypeValue } from "./constants";
+import type { OsTypeValue } from "./constants";
 
 /** 正規化されたショートカット（フロントエンドで使用） */
 export interface Shortcut {

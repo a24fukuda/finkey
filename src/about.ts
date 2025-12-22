@@ -1,5 +1,9 @@
 import { invoke, openUrl } from "./tauri-api";
-import { loadAndApplyTheme, setupSystemThemeListener, setupWindowFocusListener } from "./theme";
+import {
+	loadAndApplyTheme,
+	setupSystemThemeListener,
+	setupWindowFocusListener,
+} from "./theme";
 
 // バージョン情報を表示
 async function showVersion(): Promise<void> {
