@@ -1,6 +1,6 @@
 {
   "name": "finkey",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "Finkey - Spotlight-like shortcut key finder for Windows and Mac",
   "scripts": {
     "tauri": "tauri",
