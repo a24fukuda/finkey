@@ -1,6 +1,5 @@
 import { MACOS_NAME, WINDOWS_NAME } from "./constants";
 import { invoke, listen } from "./tauri-api";
-import { checkAndInstallUpdate } from "./updater";
 import {
 	applyTheme,
 	getCurrentThemeSetting,
@@ -14,6 +13,7 @@ import type {
 	Platform,
 	Shortcut,
 } from "./types";
+import { checkAndInstallUpdate } from "./updater";
 
 // DevToolsショートカットを無効化
 document.addEventListener(
@@ -150,6 +150,15 @@ async function init(): Promise<void> {
 			searchInput.select();
 
 			filterAndDisplay();
+		});
+	} catch (_e) {
+		// イベントリスナー登録に失敗
+	}
+
+	// トレイメニューからのアップデートリクエストをリッスン
+	try {
+		await listen("check-update", () => {
+			checkAndInstallUpdate();
 		});
 	} catch (_e) {
 		// イベントリスナー登録に失敗

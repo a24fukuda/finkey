@@ -1218,6 +1218,8 @@ fn main() {
                 MenuItem::with_id(app, "keybindings", "キーバインド設定", true, None::<&str>)?;
             let config_item =
                 MenuItem::with_id(app, "config", "設定ファイルを開く", true, None::<&str>)?;
+            let update_item =
+                MenuItem::with_id(app, "update", "アップデートを確認", true, None::<&str>)?;
             let about_item = MenuItem::with_id(app, "about", "About", true, None::<&str>)?;
             let quit_item = MenuItem::with_id(app, "quit", "終了", true, None::<&str>)?;
 
@@ -1227,6 +1229,7 @@ fn main() {
                     &show_item,
                     &keybindings_item,
                     &config_item,
+                    &update_item,
                     &about_item,
                     &quit_item,
                 ],
@@ -1260,6 +1263,11 @@ fn main() {
                     }
                     "config" => {
                         let _ = open_config_file();
+                    }
+                    "update" => {
+                        if let Some(window) = app.get_webview_window("search") {
+                            let _ = window.emit("check-update", ());
+                        }
                     }
                     "about" => {
                         if let Some(window) = app.get_webview_window("about") {
