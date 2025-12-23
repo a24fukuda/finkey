@@ -1,5 +1,6 @@
 import { MACOS_NAME, WINDOWS_NAME } from "./constants";
 import { invoke, listen } from "./tauri-api";
+import { checkAndInstallUpdate } from "./updater";
 import {
 	applyTheme,
 	getCurrentThemeSetting,
@@ -72,6 +73,9 @@ async function handleToggleTheme(): Promise<void> {
 
 // 初期化
 async function init(): Promise<void> {
+	// サイレントアップデートチェック（バックグラウンドで実行）
+	checkAndInstallUpdate();
+
 	// テーマを初期化
 	await loadAndApplyTheme();
 	themeToggleBtn.title = getThemeButtonTitle();
