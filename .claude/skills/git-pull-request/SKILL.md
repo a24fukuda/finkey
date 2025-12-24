@@ -2,7 +2,7 @@
 name: git-pull-request
 description: |
     PR規約に従ってPull Requestを作成する
-    pull request, PR, git pr, プルリクエスト, gh pr
+    pull request, PR, git pr, プルリクエスト
     PRについて言及している場合に使用する
 allowed-tools: [Read, Bash]
 ---
