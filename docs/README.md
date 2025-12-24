@@ -6,14 +6,18 @@
 
 ```
 docs/
+├── coding-standards/
+│   └── rust.md             # Rust実装時
 ├── git/
 │   ├── commit.md           # コミット時
 │   └── pull-request.md     # PR作成時
-├── coding-standards/
-│   └── rust.md             # Rust実装時
+├── prompting-standards/
+│   └── claude/
+│       ├── agent-skills.md # スキル定義時
+│       └── rules.md        # ルール定義時
 ├── branching.md            # ブランチ作成時
-├── versioning.md           # バージョン更新時
-└── dependencies.md         # 依存追加時
+├── dependencies.md         # 依存追加時
+└── versioning.md           # バージョン更新時
 ```
 
 ## 執筆規則
@@ -42,9 +46,10 @@ docs/
 ```
 
 **ポイント:**
-- 導入文で「何についてのドキュメントか」を明示
-- 概要から詳細へ展開
-- 外部参照がある場合は末尾に「参考」セクションを設ける
+- 導入文で「何についてのドキュメントか」の明示
+- 概要から詳細への展開
+- 同階層の見出しの抽象度統一
+- 外部参照がある場合は末尾に「参考」セクションを配置
 
 ### 配置
 
@@ -69,7 +74,7 @@ docs/
 
 #### 敬体・常体
 
-常体（だ/である）を使用する。規則文書として簡潔さと権威性を重視するため。
+常体（だ/である）を使用する。規則文書として簡潔さと権威性を重視する。
 
 ```
 ○ 本プロジェクトはGitHub Flowを採用する。
