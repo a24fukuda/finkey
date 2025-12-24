@@ -40,6 +40,14 @@ writing-documentation
 | 曖昧 | `helper`, `utils`, `tools` |
 | 過度に一般的 | `documents`, `data`, `files` |
 | 予約語使用 | `anthropic-helper`, `claude-tools` |
+| 一貫性のないパターン | スキルコレクション内でバラバラ |
+
+**一貫した命名の利点:**
+
+- ドキュメントや会話でスキルを参照しやすい
+- スキルが何をするか一目で理解できる
+- 複数のスキルを整理・検索しやすい
+- 統一されたスキルライブラリを維持できる
 
 ### description
 
