@@ -1,15 +1,15 @@
 ---
 name: git-pull-request
 description: |
-    PR規約に従ってPull Requestを作成する
+    Pull Request規約に従ってPull Requestを作成する
     pull request, PR, git pr, プルリクエスト
-    PRについて言及している場合に使用する
+    Pull Requestについて言及している場合に使用する
 allowed-tools: [Read, Bash]
 ---
 
 # Git Pull Request
 
-PR規約に従ってPull Requestを作成する。
+Pull Request規約に従ってPull Requestを作成する。
 
 ## ワークフロー
 
@@ -19,12 +19,12 @@ PR規約に従ってPull Requestを作成する。
 タスク進捗：
 - [ ] ステップ1: 規約を確認する
 - [ ] ステップ2: 変更内容を確認する
-- [ ] ステップ3: PRを作成する
+- [ ] ステップ3: Pull Requestを作成する
 ```
 
 **ステップ1: 規約を確認する**
 
-[docs/git/pull-request.md](../../../docs/git/pull-request.md) を読み、PR規約を確認する。
+[docs/git/pull-request.md](../../../docs/git/pull-request.md) を読み、Pull Request規約を確認する。
 
 **ステップ2: 変更内容を確認する**
 
@@ -33,7 +33,7 @@ PR規約に従ってPull Requestを作成する。
 - `git log` でコミット履歴を確認
 - `git diff main...HEAD` で差分を確認
 
-**ステップ3: PRを作成する**
+**ステップ3: Pull Requestを作成する**
 
 実行: `gh pr create --title "<type>: <subject>" --body "..."`
 
