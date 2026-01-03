@@ -14,6 +14,7 @@ name: skill-name
 |------|------|
 | 文字種 | 小文字、数字、ハイフンのみ |
 | 最大長 | 64文字 |
+| 形式 | ハイフンで始終しない、連続ハイフン禁止 |
 | 禁止 | XMLタグ、予約語（`anthropic`, `claude`） |
 
 **推奨形式（動名詞形）:**
@@ -63,7 +64,7 @@ description: |
 | 最大長 | 1024文字 |
 | 文体 | 三人称（「処理する」「生成する」） |
 | 構成 | 説明 → キーワード → 使用条件（各行で分離） |
-| 禁止 | XMLタグ |
+| 禁止 | XMLタグ、山括弧（`<`, `>`） |
 
 **構成要素:**
 
@@ -132,13 +133,20 @@ allowed-tools: [Read, Bash, Edit, Write, Glob, Grep]
 
 ### 段階的開示
 
-SKILL.mdは概要として機能し、詳細は別ファイルに配置する。
+情報は3層構造でロードされる。SKILL.mdは概要として機能し、詳細は別ファイルに配置する。
+
+| 層 | タイミング | 内容 |
+|----|-----------|------|
+| 1. metadata | 常に利用可能 | name, description（トリガー判定に使用） |
+| 2. SKILL.md本文 | トリガー時 | メイン指示、ワークフロー概要 |
+| 3. バンドルリソース | 必要時 | 詳細ガイド、スクリプト、アセット |
 
 ```
 skill-name/
 ├── SKILL.md              # メイン指示（トリガー時にロード）
-├── FORMS.md              # 詳細ガイド（必要時にロード）
-├── reference.md          # APIリファレンス（必要時にロード）
+├── references/
+│   ├── FORMS.md          # 詳細ガイド（必要時にロード）
+│   └── reference.md      # APIリファレンス（必要時にロード）
 └── scripts/
     └── validate.py       # ユーティリティスクリプト
 ```
@@ -220,25 +228,115 @@ SKILL.md → examples.md
 4. **検証が成功したときのみ続行する**
 ```
 
+### 条件分岐ワークフロー
+
+分岐がある場合は決定ポイントを明示する。
+
+```markdown
+## ドキュメント処理
+
+1. 処理タイプを判定する
+2. タイプに応じて分岐：
+   - **新規作成の場合** → 作成ワークフローへ
+   - **編集の場合** → 編集ワークフローへ
+
+### 作成ワークフロー
+1. テンプレートを選択する
+2. 内容を入力する
+3. 検証する
+
+### 編集ワークフロー
+1. 既存ファイルを読み込む
+2. 差分を適用する
+3. 検証する
+```
+
+### 出力パターン
+
+#### テンプレートパターン
+
+出力形式が重要な場合、テンプレートを提供する。
+
+**厳格なテンプレート（API応答、レポートなど）:**
+
+```markdown
+## レポート形式
+
+以下の形式で出力する：
+
+### Executive Summary
+[要約]
+
+### Key Findings
+[発見事項]
+
+### Recommendations
+[推奨事項]
+```
+
+**柔軟なテンプレート（分析タイプに応じて調整）:**
+
+```markdown
+## 分析レポート
+
+以下のセクションを含める（分析タイプに応じて調整可）：
+- 概要
+- 詳細分析
+- 結論
+```
+
+#### 例示パターン
+
+出力品質が例に依存する場合、入出力ペアを示す。
+
+````markdown
+## コミットメッセージ形式
+
+入力と出力の例：
+
+入力：認証機能にJWTを追加
+出力：`feat(auth): implement JWT-based authentication`
+
+入力：ログイン画面のタイポ修正
+出力：`fix(ui): correct typo in login form`
+````
+
 ## ファイル構成
 
 ```
 .claude/skills/
 └── skill-name/
-    └── SKILL.md
+    ├── SKILL.md              # 必須：メイン指示
+    ├── references/           # 任意：参照ドキュメント
+    │   ├── guide.md
+    │   └── patterns.md
+    ├── scripts/              # 任意：ユーティリティスクリプト
+    │   └── validate.py
+    └── assets/               # 任意：画像・データファイル
+        └── template.json
 ```
 
 | 対象 | 規則 | 例 |
 |------|------|-----|
 | ディレクトリ | 小文字、ハイフン区切り | `pdf-processing/` |
-| ファイル | `SKILL.md` 固定 | `SKILL.md` |
-| パス区切り | フォワードスラッシュのみ | `reference/guide.md` |
+| ファイル | `SKILL.md` 固定（必須） | `SKILL.md` |
+| パス区切り | フォワードスラッシュのみ | `references/guide.md` |
+
+### ディレクトリの役割
+
+| ディレクトリ | 用途 |
+|-------------|------|
+| `references/` | 詳細ガイド、パターン集、APIリファレンス |
+| `scripts/` | 検証スクリプト、ユーティリティ |
+| `assets/` | テンプレート、設定ファイル、画像 |
 
 ## 設計原則
 
 ### 簡潔さ
 
-Claudeが既に知っていることは書かない。
+コンテキストウィンドウは共有リソースである。Claudeが既に知っていることは書かない。
+
+**判断基準:** 各情報について「本当にClaudeに必要か」を問う。
 
 **良い例（約50トークン）:**
 
@@ -444,3 +542,4 @@ GitHub:create_issueツールを使用して問題を作成する。
 
 - [公式ベストプラクティス](https://platform.claude.com/docs/ja/agents-and-tools/agent-skills/best-practices)
 - [スキル概要](https://platform.claude.com/docs/ja/agents-and-tools/agent-skills/overview)
+- [skill-creator](https://github.com/anthropics/skills/tree/main/skills/skill-creator) - 公式スキル作成ガイド
