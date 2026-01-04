@@ -136,4 +136,4 @@ docs/
 
 ## 参考
 
-- [ドキュメント作成ワークフロー](../.claude/rules/documentation.md) - 作成手順とチェックリスト
+- [ドキュメント作成ワークフロー](../.claude/skills/writing-documentation/SKILL.md) - 新規作成時のワークフロー
