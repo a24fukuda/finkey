@@ -44,16 +44,18 @@ document.addEventListener("contextmenu", (e) => {
 const activeAppNameEl = document.getElementById(
 	"active-app-name",
 ) as HTMLElement;
-const searchInput = document.getElementById("search-input") as HTMLInputElement;
-const resultsList = document.getElementById("results-list") as HTMLElement;
-const noResults = document.getElementById("no-results") as HTMLElement;
-const openConfigBtn = document.getElementById(
+const searchInputEl = document.getElementById(
+	"search-input",
+) as HTMLInputElement;
+const resultsListEl = document.getElementById("results-list") as HTMLElement;
+const noResultsEl = document.getElementById("no-results") as HTMLElement;
+const openConfigBtnEl = document.getElementById(
 	"open-config-btn",
 ) as HTMLButtonElement;
-const openSettingsBtn = document.getElementById(
+const openSettingsBtnEl = document.getElementById(
 	"open-settings-btn",
 ) as HTMLButtonElement;
-const themeToggleBtn = document.getElementById(
+const themeToggleBtnEl = document.getElementById(
 	"theme-toggle",
 ) as HTMLButtonElement;
 
@@ -68,7 +70,7 @@ let shortcuts: Shortcut[] = [];
 // テーマ切り替えハンドラ
 async function handleToggleTheme(): Promise<void> {
 	await toggleTheme();
-	themeToggleBtn.title = getThemeButtonTitle();
+	themeToggleBtnEl.title = getThemeButtonTitle();
 }
 
 // 初期化
@@ -78,7 +80,7 @@ async function init(): Promise<void> {
 
 	// テーマを初期化
 	await loadAndApplyTheme();
-	themeToggleBtn.title = getThemeButtonTitle();
+	themeToggleBtnEl.title = getThemeButtonTitle();
 
 	// プラットフォーム検出
 	try {
@@ -100,11 +102,11 @@ async function init(): Promise<void> {
 	filterAndDisplay();
 
 	// イベントリスナー
-	searchInput.addEventListener("input", handleTextSearch);
-	searchInput.addEventListener("keydown", handleKeydown);
-	openConfigBtn.addEventListener("click", openConfigFile);
-	openSettingsBtn.addEventListener("click", openSettingsFile);
-	themeToggleBtn.addEventListener("click", handleToggleTheme);
+	searchInputEl.addEventListener("input", handleTextSearch);
+	searchInputEl.addEventListener("keydown", handleKeydown);
+	openConfigBtnEl.addEventListener("click", openConfigFile);
+	openSettingsBtnEl.addEventListener("click", openSettingsFile);
+	themeToggleBtnEl.addEventListener("click", handleToggleTheme);
 
 	// Tauriイベントリスナー（アクティブウィンドウ情報を受け取る）
 	try {
@@ -115,7 +117,7 @@ async function init(): Promise<void> {
 			if (getCurrentThemeSetting() === "system") {
 				applyTheme();
 			}
-			themeToggleBtn.title = getThemeButtonTitle();
+			themeToggleBtnEl.title = getThemeButtonTitle();
 
 			// ショートカットデータを再読み込み（設定ファイルが変更されている可能性があるため）
 			try {
@@ -145,9 +147,9 @@ async function init(): Promise<void> {
 
 			// 状態をリセット
 			selectedIndex = 0;
-			searchInput.value = "";
-			searchInput.focus();
-			searchInput.select();
+			searchInputEl.value = "";
+			searchInputEl.focus();
+			searchInputEl.select();
 
 			filterAndDisplay();
 		});
@@ -259,7 +261,7 @@ function getOsName(): string {
 
 // テキストでフィルタリングとソート
 function filterByText(): void {
-	const query = searchInput.value.toLowerCase().trim();
+	const query = searchInputEl.value.toLowerCase().trim();
 
 	// 検出アプリ名のリストを取得（name で比較）
 	const detectedAppNames = matchedApps.map((app) => app.name.toLowerCase());
@@ -300,14 +302,14 @@ function filterByText(): void {
 
 // 結果表示
 function displayResults(): void {
-	resultsList.innerHTML = "";
+	resultsListEl.innerHTML = "";
 
 	if (filteredShortcuts.length === 0) {
-		noResults.style.display = "block";
+		noResultsEl.style.display = "block";
 		return;
 	}
 
-	noResults.style.display = "none";
+	noResultsEl.style.display = "none";
 
 	const fragment = document.createDocumentFragment();
 
@@ -316,7 +318,7 @@ function displayResults(): void {
 		fragment.appendChild(item);
 	});
 
-	resultsList.appendChild(fragment);
+	resultsListEl.appendChild(fragment);
 	updateSelection();
 }
 
@@ -354,7 +356,7 @@ function createResultItem(shortcut: Shortcut, index: number): HTMLDivElement {
 	const appLabel = shortcut.app;
 
 	// ハイライト処理
-	const query = searchInput.value.toLowerCase().trim();
+	const query = searchInputEl.value.toLowerCase().trim();
 	const highlightedAction = highlightText(shortcut.action, query);
 
 	// ショートカットキーをフォーマット

@@ -14,76 +14,76 @@ import {
 import type { AppConfig, Keybinding, OsType as OsTypeValue } from "./types";
 
 // DOM要素
-const closeBtn = document.getElementById("close-btn") as HTMLButtonElement;
-const appSearchInput = document.getElementById(
+const closeBtnEl = document.getElementById("close-btn") as HTMLButtonElement;
+const appSearchInputEl = document.getElementById(
 	"app-search",
 ) as HTMLInputElement;
 const appListEl = document.getElementById("app-list") as HTMLElement;
 const platformListEl = document.getElementById("platform-list") as HTMLElement;
-const addBtn = document.getElementById("add-btn") as HTMLButtonElement;
-const addMenu = document.getElementById("add-menu") as HTMLElement;
-const addAppBtn = document.getElementById("add-app-btn") as HTMLButtonElement;
-const addPlatformBtn = document.getElementById(
+const addBtnEl = document.getElementById("add-btn") as HTMLButtonElement;
+const addMenuEl = document.getElementById("add-menu") as HTMLElement;
+const addAppBtnEl = document.getElementById("add-app-btn") as HTMLButtonElement;
+const addPlatformBtnEl = document.getElementById(
 	"add-platform-btn",
 ) as HTMLButtonElement;
 const noSelectionEl = document.getElementById("no-selection") as HTMLElement;
 const editAreaEl = document.getElementById("edit-area") as HTMLElement;
 const editIconEl = document.getElementById("edit-icon") as HTMLElement;
 const editTypeEl = document.getElementById("edit-type") as HTMLElement;
-const deleteAppBtn = document.getElementById(
+const deleteAppBtnEl = document.getElementById(
 	"delete-app-btn",
 ) as HTMLButtonElement;
 const appFormEl = document.getElementById("app-form") as HTMLElement;
 const platformFormEl = document.getElementById("platform-form") as HTMLElement;
-const inputIcon = document.getElementById("input-icon") as HTMLInputElement;
-const inputName = document.getElementById("input-name") as HTMLInputElement;
+const inputIconEl = document.getElementById("input-icon") as HTMLInputElement;
+const inputNameEl = document.getElementById("input-name") as HTMLInputElement;
 const bindTagsEl = document.getElementById("bind-tags") as HTMLElement;
-const bindInput = document.getElementById("bind-input") as HTMLInputElement;
-const inputOs = document.getElementById("input-os") as HTMLSelectElement;
-const inputPlatformIcon = document.getElementById(
+const bindInputEl = document.getElementById("bind-input") as HTMLInputElement;
+const inputOsEl = document.getElementById("input-os") as HTMLSelectElement;
+const inputPlatformIconEl = document.getElementById(
 	"input-platform-icon",
 ) as HTMLInputElement;
-const keybindingsTbody = document.getElementById(
+const keybindingsTbodyEl = document.getElementById(
 	"keybindings-tbody",
 ) as HTMLElement;
-const addKeybindingBtn = document.getElementById(
+const addKeybindingBtnEl = document.getElementById(
 	"add-keybinding-btn",
 ) as HTMLButtonElement;
-const resetBtn = document.getElementById("reset-btn") as HTMLButtonElement;
-const openFileBtn = document.getElementById(
+const resetBtnEl = document.getElementById("reset-btn") as HTMLButtonElement;
+const openFileBtnEl = document.getElementById(
 	"open-file-btn",
 ) as HTMLButtonElement;
-const cancelBtn = document.getElementById("cancel-btn") as HTMLButtonElement;
-const saveBtn = document.getElementById("save-btn") as HTMLButtonElement;
+const cancelBtnEl = document.getElementById("cancel-btn") as HTMLButtonElement;
+const saveBtnEl = document.getElementById("save-btn") as HTMLButtonElement;
 
 // キーキャプチャモーダル
-const keyCaptureModal = document.getElementById(
+const keyCaptureModalEl = document.getElementById(
 	"key-capture-modal",
 ) as HTMLElement;
 const capturedKeyEl = document.getElementById("captured-key") as HTMLElement;
-const sequenceModeCheckbox = document.getElementById(
+const sequenceModeCheckboxEl = document.getElementById(
 	"sequence-mode",
 ) as HTMLInputElement;
-const clearKeyBtn = document.getElementById(
+const clearKeyBtnEl = document.getElementById(
 	"clear-key-btn",
 ) as HTMLButtonElement;
-const cancelCaptureBtn = document.getElementById(
+const cancelCaptureBtnEl = document.getElementById(
 	"cancel-capture-btn",
 ) as HTMLButtonElement;
-const confirmKeyBtn = document.getElementById(
+const confirmKeyBtnEl = document.getElementById(
 	"confirm-key-btn",
 ) as HTMLButtonElement;
 
 // 確認ダイアログ
-const confirmModal = document.getElementById("confirm-modal") as HTMLElement;
-const confirmTitle = document.getElementById("confirm-title") as HTMLElement;
-const confirmMessage = document.getElementById(
+const confirmModalEl = document.getElementById("confirm-modal") as HTMLElement;
+const confirmTitleEl = document.getElementById("confirm-title") as HTMLElement;
+const confirmMessageEl = document.getElementById(
 	"confirm-message",
 ) as HTMLElement;
-const confirmCancelBtn = document.getElementById(
+const confirmCancelBtnEl = document.getElementById(
 	"confirm-cancel-btn",
 ) as HTMLButtonElement;
-const confirmOkBtn = document.getElementById(
+const confirmOkBtnEl = document.getElementById(
 	"confirm-ok-btn",
 ) as HTMLButtonElement;
 
@@ -117,43 +117,43 @@ async function loadKeybindings(): Promise<void> {
 
 // イベントリスナーの設定
 function setupEventListeners(): void {
-	closeBtn.addEventListener("click", handleClose);
-	appSearchInput.addEventListener("input", handleAppSearch);
-	addBtn.addEventListener("click", toggleAddMenu);
-	addAppBtn.addEventListener("click", () => addNewItem("app"));
-	addPlatformBtn.addEventListener("click", () => addNewItem("platform"));
-	deleteAppBtn.addEventListener("click", handleDeleteApp);
-	addKeybindingBtn.addEventListener("click", addKeybinding);
-	resetBtn.addEventListener("click", handleReset);
-	openFileBtn.addEventListener("click", handleOpenFile);
-	cancelBtn.addEventListener("click", handleCancel);
-	saveBtn.addEventListener("click", handleSave);
+	closeBtnEl.addEventListener("click", handleClose);
+	appSearchInputEl.addEventListener("input", handleAppSearch);
+	addBtnEl.addEventListener("click", toggleAddMenu);
+	addAppBtnEl.addEventListener("click", () => addNewItem("app"));
+	addPlatformBtnEl.addEventListener("click", () => addNewItem("platform"));
+	deleteAppBtnEl.addEventListener("click", handleDeleteApp);
+	addKeybindingBtnEl.addEventListener("click", addKeybinding);
+	resetBtnEl.addEventListener("click", handleReset);
+	openFileBtnEl.addEventListener("click", handleOpenFile);
+	cancelBtnEl.addEventListener("click", handleCancel);
+	saveBtnEl.addEventListener("click", handleSave);
 
 	// アプリ設定フォーム
-	inputIcon.addEventListener("input", handleAppFormChange);
-	inputName.addEventListener("input", handleAppFormChange);
-	bindInput.addEventListener("keydown", handleBindInputKeydown);
+	inputIconEl.addEventListener("input", handleAppFormChange);
+	inputNameEl.addEventListener("input", handleAppFormChange);
+	bindInputEl.addEventListener("keydown", handleBindInputKeydown);
 
 	// プラットフォーム設定フォーム
-	inputOs.addEventListener("change", handlePlatformFormChange);
-	inputPlatformIcon.addEventListener("input", handlePlatformFormChange);
+	inputOsEl.addEventListener("change", handlePlatformFormChange);
+	inputPlatformIconEl.addEventListener("input", handlePlatformFormChange);
 
 	// キーキャプチャモーダル
-	clearKeyBtn.addEventListener("click", clearCapturedKey);
-	cancelCaptureBtn.addEventListener("click", closeCaptureModal);
-	confirmKeyBtn.addEventListener("click", confirmCapturedKey);
+	clearKeyBtnEl.addEventListener("click", clearCapturedKey);
+	cancelCaptureBtnEl.addEventListener("click", closeCaptureModal);
+	confirmKeyBtnEl.addEventListener("click", confirmCapturedKey);
 
 	// 確認ダイアログ
-	confirmCancelBtn.addEventListener("click", closeConfirmModal);
-	confirmOkBtn.addEventListener("click", handleConfirmOk);
+	confirmCancelBtnEl.addEventListener("click", closeConfirmModal);
+	confirmOkBtnEl.addEventListener("click", handleConfirmOk);
 
 	// メニュー外クリックで閉じる
 	document.addEventListener("click", (e) => {
 		if (
-			!addBtn.contains(e.target as Node) &&
-			!addMenu.contains(e.target as Node)
+			!addBtnEl.contains(e.target as Node) &&
+			!addMenuEl.contains(e.target as Node)
 		) {
-			addMenu.style.display = "none";
+			addMenuEl.style.display = "none";
 		}
 	});
 
@@ -163,9 +163,9 @@ function setupEventListeners(): void {
 			e.preventDefault();
 			handleSave();
 		} else if (e.key === "Escape") {
-			if (keyCaptureModal.style.display !== "none") {
+			if (keyCaptureModalEl.style.display !== "none") {
 				closeCaptureModal();
-			} else if (confirmModal.style.display !== "none") {
+			} else if (confirmModalEl.style.display !== "none") {
 				closeConfirmModal();
 			}
 		}
@@ -247,7 +247,7 @@ function createAppItem(config: AppConfig, index: number): HTMLDivElement {
 // アプリ選択
 function selectApp(index: number): void {
 	selectedIndex = index;
-	renderAppList(appSearchInput.value);
+	renderAppList(appSearchInputEl.value);
 	showEditArea();
 }
 
@@ -273,8 +273,8 @@ function showEditArea(): void {
 
 		const icon = config.icon || getOsIcon(config.os || OsType.Windows);
 		editIconEl.textContent = icon;
-		inputOs.value = config.os || OsType.Windows;
-		inputPlatformIcon.value = config.icon || "";
+		inputOsEl.value = config.os || OsType.Windows;
+		inputPlatformIconEl.value = config.icon || "";
 
 		// 既存のOS設定を無効化
 		updateOsSelectOptions();
@@ -286,8 +286,8 @@ function showEditArea(): void {
 
 		const icon = config.icon || DEFAULT_APP_ICON;
 		editIconEl.textContent = icon;
-		inputIcon.value = config.icon || "";
-		inputName.value = config.name || "";
+		inputIconEl.value = config.icon || "";
+		inputNameEl.value = config.name || "";
 
 		// バインドタグを描画
 		renderBindTags(config);
@@ -319,7 +319,7 @@ function renderBindTags(config: AppConfig): void {
 		tag.querySelector(".bind-tag-remove")?.addEventListener("click", () => {
 			removeBindTag(bind);
 		});
-		bindTagsEl.insertBefore(tag, bindInput);
+		bindTagsEl.insertBefore(tag, bindInputEl);
 	}
 }
 
@@ -344,7 +344,7 @@ function addBindTag(value: string): void {
 
 	markChanged();
 	renderBindTags(config);
-	bindInput.value = "";
+	bindInputEl.value = "";
 }
 
 // バインドタグを削除
@@ -364,8 +364,8 @@ function removeBindTag(value: string): void {
 function handleBindInputKeydown(e: KeyboardEvent): void {
 	if (e.key === "Enter") {
 		e.preventDefault();
-		addBindTag(bindInput.value);
-	} else if (e.key === "Backspace" && bindInput.value === "") {
+		addBindTag(bindInputEl.value);
+	} else if (e.key === "Backspace" && bindInputEl.value === "") {
 		// 入力が空の場合、最後のタグを削除
 		const config = keybindings[selectedIndex];
 		const binds = getBinds(config);
@@ -384,17 +384,17 @@ function updateOsSelectOptions(): void {
 		}
 	}
 
-	for (const option of inputOs.options) {
+	for (const option of inputOsEl.options) {
 		option.disabled = existingOs.has(option.value);
 	}
 }
 
 // キーバインドテーブルの描画
 function renderKeybindingsTable(config: AppConfig): void {
-	keybindingsTbody.innerHTML = "";
+	keybindingsTbodyEl.innerHTML = "";
 
 	if (!config.keybindings || config.keybindings.length === 0) {
-		keybindingsTbody.innerHTML = `
+		keybindingsTbodyEl.innerHTML = `
 			<tr>
 				<td colspan="4">
 					<div class="empty-keybindings">
@@ -410,7 +410,7 @@ function renderKeybindingsTable(config: AppConfig): void {
 	for (let i = 0; i < config.keybindings.length; i++) {
 		const kb = config.keybindings[i];
 		const row = createKeybindingRow(kb, i);
-		keybindingsTbody.appendChild(row);
+		keybindingsTbodyEl.appendChild(row);
 	}
 }
 
@@ -510,7 +510,7 @@ function addKeybinding(): void {
 	renderKeybindingsTable(config);
 
 	// 新しい行のアクション入力にフォーカス
-	const lastRow = keybindingsTbody.lastElementChild;
+	const lastRow = keybindingsTbodyEl.lastElementChild;
 	const actionInput = lastRow?.querySelector("input");
 	actionInput?.focus();
 }
@@ -529,9 +529,9 @@ function deleteKeybinding(index: number): void {
 function openCaptureModal(callback: (key: string) => void): void {
 	currentKeyCaptureCallback = callback;
 	capturedKeys = [];
-	sequenceModeCheckbox.checked = false;
+	sequenceModeCheckboxEl.checked = false;
 	updateCapturedKeyDisplay();
-	keyCaptureModal.style.display = "flex";
+	keyCaptureModalEl.style.display = "flex";
 
 	// キー入力をリッスン
 	document.addEventListener("keydown", handleKeyCaptureKeydown);
@@ -539,7 +539,7 @@ function openCaptureModal(callback: (key: string) => void): void {
 
 // キーキャプチャモーダルを閉じる
 function closeCaptureModal(): void {
-	keyCaptureModal.style.display = "none";
+	keyCaptureModalEl.style.display = "none";
 	currentKeyCaptureCallback = null;
 	capturedKeys = [];
 	document.removeEventListener("keydown", handleKeyCaptureKeydown);
@@ -576,7 +576,7 @@ function handleKeyCaptureKeydown(e: KeyboardEvent): void {
 
 	const keyCombo = parts.join(" + ");
 
-	if (sequenceModeCheckbox.checked) {
+	if (sequenceModeCheckboxEl.checked) {
 		capturedKeys.push(keyCombo);
 	} else {
 		capturedKeys = [keyCombo];
@@ -630,15 +630,15 @@ function showConfirmDialog(
 	message: string,
 	callback: () => void,
 ): void {
-	confirmTitle.textContent = title;
-	confirmMessage.textContent = message;
+	confirmTitleEl.textContent = title;
+	confirmMessageEl.textContent = message;
 	confirmCallback = callback;
-	confirmModal.style.display = "flex";
+	confirmModalEl.style.display = "flex";
 }
 
 // 確認ダイアログを閉じる
 function closeConfirmModal(): void {
-	confirmModal.style.display = "none";
+	confirmModalEl.style.display = "none";
 	confirmCallback = null;
 }
 
@@ -650,17 +650,18 @@ function handleConfirmOk(): void {
 
 // アプリ検索
 function handleAppSearch(): void {
-	renderAppList(appSearchInput.value);
+	renderAppList(appSearchInputEl.value);
 }
 
 // 追加メニューの切り替え
 function toggleAddMenu(): void {
-	addMenu.style.display = addMenu.style.display === "none" ? "block" : "none";
+	addMenuEl.style.display =
+		addMenuEl.style.display === "none" ? "block" : "none";
 }
 
 // 新しいアイテムを追加
 function addNewItem(type: "app" | "platform"): void {
-	addMenu.style.display = "none";
+	addMenuEl.style.display = "none";
 
 	if (type === "app") {
 		keybindings.push({
@@ -705,14 +706,14 @@ function handleAppFormChange(): void {
 	if (selectedIndex < 0) return;
 
 	const config = keybindings[selectedIndex];
-	config.icon = inputIcon.value || undefined;
-	config.name = inputName.value;
+	config.icon = inputIconEl.value || undefined;
+	config.name = inputNameEl.value;
 
 	// アイコン表示を更新
 	editIconEl.textContent = config.icon || DEFAULT_APP_ICON;
 
 	markChanged();
-	renderAppList(appSearchInput.value);
+	renderAppList(appSearchInputEl.value);
 }
 
 // プラットフォームフォームの変更処理
@@ -720,15 +721,15 @@ function handlePlatformFormChange(): void {
 	if (selectedIndex < 0) return;
 
 	const config = keybindings[selectedIndex];
-	config.os = inputOs.value as OsTypeValue;
-	config.icon = inputPlatformIcon.value || undefined;
+	config.os = inputOsEl.value as OsTypeValue;
+	config.icon = inputPlatformIconEl.value || undefined;
 
 	// アイコン表示を更新
 	editIconEl.textContent =
 		config.icon || getOsIcon(config.os || OsType.Windows);
 
 	markChanged();
-	renderAppList(appSearchInput.value);
+	renderAppList(appSearchInputEl.value);
 }
 
 // アプリ削除
