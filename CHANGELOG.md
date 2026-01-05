@@ -5,6 +5,13 @@ Finkeyの全ての変更履歴を記録します。
 フォーマットは[Keep a Changelog](https://keepachangelog.com/ja/1.0.0/)に基づき、
 バージョニングは[Semantic Versioning](https://semver.org/lang/ja/)に準拠しています。
 
+## [0.4.5] - 2026-01-06
+
+### Fixed
+
+- 自動アップデート用のlatest.jsonが生成されない問題を修正
+  - tauri-actionのオプション名を修正
+
 ## [0.4.4] - 2026-01-05
 
 ### Fixed
@@ -128,6 +135,7 @@ Finkeyの全ての変更履歴を記録します。
 - TypeScript導入
 - Biome（リンター/フォーマッター）導入
 
+[0.4.5]: https://github.com/a24fukuda/finkey/compare/v0.4.4...v0.4.5
 [0.4.4]: https://github.com/a24fukuda/finkey/compare/v0.4.3...v0.4.4
 [0.4.3]: https://github.com/a24fukuda/finkey/compare/v0.4.2...v0.4.3
 [0.4.2]: https://github.com/a24fukuda/finkey/compare/v0.4.1...v0.4.2
