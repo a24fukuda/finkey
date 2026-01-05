@@ -1,9 +1,9 @@
 ---
 name: review-artifact
 description: |
-  コードまたはドキュメント作成・編集後の整合性レビューワークフロー。
-  review, artifact, create, update, edit, レビュー, 整合性, 確認
-  ファイルの作成・編集完了時、または明示的にレビューを依頼されたときに使用する。
+  コードまたはドキュメントの作成・編集後に整合性をレビューする
+  review, artifact, レビュー, 整合性, 確認
+  ファイルの作成・編集完了時、または明示的にレビューを依頼されたときに使用する
 allowed-tools:
   - Read
   - Edit
