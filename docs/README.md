@@ -10,7 +10,7 @@ docs/
 │   └── rust.md             # Rust実装時
 ├── git/
 │   ├── commit.md           # コミット時
-│   └── pull-request.md     # Pull Request作成時
+│   └── pull-request.md     # Pull Request作成・マージ時
 ├── prompting-standards/
 │   └── claude/
 │       ├── agent-skills.md # スキル定義時
