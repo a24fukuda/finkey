@@ -155,5 +155,5 @@ jobs:
             This release supports auto-update. Existing users will be notified automatically.
           releaseDraft: true
           prerelease: false
-          updater: true
+          includeUpdaterJson: true
           args: --target ${{ matrix.target }}
