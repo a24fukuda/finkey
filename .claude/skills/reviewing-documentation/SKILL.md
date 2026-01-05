@@ -1,8 +1,8 @@
 ---
-name: reviewing-docs
+name: reviewing-documentation
 description: |
   ドキュメントの作成・編集後に整合性をレビューする
-  review, docs, レビュー, ドキュメント, 整合性, 確認
+  review, documentation, レビュー, ドキュメント, 整合性, 確認
   ドキュメントの作成・編集完了時、または明示的にレビューを依頼されたときに使用する
 allowed-tools:
   - Read
