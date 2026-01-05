@@ -108,6 +108,51 @@ allowed-tools: [Read, Bash, Edit, Write, Glob, Grep]
 
 必要最小限のツールのみ許可する。
 
+#### 最小権限の原則
+
+スキルが必要とするツールのみを許可し、不要なツールは含めない。
+
+| 評価 | 例 |
+|------|-----|
+| ✕ 過剰 | `[Read, Write, Edit, Bash, Glob, Grep]` |
+| ○ 適切 | `[Read, Write, Edit]`（ドキュメント作成スキル） |
+
+#### Bashの権限制御
+
+`Bash` はプレフィックスマッチ記法で特定コマンドに制限できる。
+
+**記法:**
+
+| 形式 | 許可範囲 | 例 |
+|------|----------|-----|
+| `Bash` | 全コマンド | 制限なし |
+| `Bash(command)` | 完全一致 | `Bash(npm run build)` |
+| `Bash(prefix:*)` | プレフィックス一致 | `Bash(git:*)` |
+
+**サブコマンドレベルの制限:**
+
+gitのようにサブコマンドを持つコマンドは、サブコマンド単位で制限する。
+
+```yaml
+# 悪い例（git全コマンドを許可）
+allowed-tools: [Bash(git:*)]
+
+# 良い例（必要なサブコマンドのみ許可）
+allowed-tools: [Bash(git status:*), Bash(git diff:*), Bash(git add:*), Bash(git commit:*)]
+```
+
+**スキル別の設定例:**
+
+| スキル | allowed-tools |
+|--------|---------------|
+| コミット作成 | `[Read, Bash(git status:*), Bash(git diff:*), Bash(git add:*), Bash(git commit:*)]` |
+| Pull Request作成 | `[Read, Bash(git status:*), Bash(git log:*), Bash(git diff:*), Bash(gh pr:*)]` |
+| ドキュメント作成 | `[Read, Write, Edit]` |
+
+#### 注意事項
+
+スキルの `allowed-tools` は**スキル内で使用可能なツールを制限する**設定であり、ユーザー確認をスキップするには別途グローバル設定（settings.json の permissions）での許可が必要。
+
 ## 本文構成
 
 ### 基本構造
