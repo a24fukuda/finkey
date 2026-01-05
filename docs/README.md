@@ -18,6 +18,7 @@ docs/
 │   └── claude/
 │       ├── agent-skills.md # スキル定義時
 │       ├── commands.md     # コマンド定義時
+│       ├── common.md       # 共通規約
 │       └── rules.md        # ルール定義時
 ├── branching.md            # ブランチ作成時
 ├── dependencies.md         # 依存追加時

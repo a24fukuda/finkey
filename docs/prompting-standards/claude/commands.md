@@ -2,6 +2,8 @@
 
 カスタムスラッシュコマンドを定義する際の規約を定める。
 
+本規約は [共通規約](common.md) と併せて参照すること。
+
 ## Frontmatter
 
 ### description
@@ -199,8 +201,6 @@ argument-hint: [issue-number] [priority]
 
 | 対象 | 規則 | 例 |
 |------|------|-----|
-| ディレクトリ | 小文字、ハイフン区切り | `commands/` |
-| ファイル | 小文字、ハイフン区切り、`.md` | `git-commit.md` |
 | コマンド名 | ファイル名から `.md` を除いたもの | `git-commit` |
 
 ### サブディレクトリ
@@ -224,8 +224,6 @@ argument-hint: [issue-number] [priority]
 **注意:** 同名ファイルを複数のサブディレクトリに配置すると競合する。
 
 ## 設計原則
-
-基本原則は [agent-skills.md](agent-skills.md) の「設計原則」を参照。
 
 ### コマンド固有の注意点
 
