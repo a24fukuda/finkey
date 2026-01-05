@@ -7,7 +7,10 @@
 ```
 docs/
 ├── coding-standards/
-│   └── rust.md             # Rust実装時
+│   ├── css.md              # CSS実装時
+│   ├── html.md             # HTML実装時
+│   ├── rust.md             # Rust実装時
+│   └── typescript.md       # TypeScript実装時
 ├── git/
 │   ├── commit.md           # コミット時
 │   └── pull-request.md     # Pull Request作成・マージ時
@@ -133,7 +136,3 @@ docs/
 2. 「〜する」と動詞化するか？ → カタカナ
 3. 上記以外 → カタカナ
 ```
-
-## 参考
-
-- [ドキュメント作成ワークフロー](../.claude/skills/writing-documentation/SKILL.md) - 新規作成時のワークフロー
