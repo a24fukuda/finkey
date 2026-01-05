@@ -1,5 +1,5 @@
 ---
-description: バージョン更新、CHANGELOG更新、PR作成、mainへのスカッシュマージを実行
+description: バージョン更新、CHANGELOG更新、Pull Request作成、mainへのスカッシュマージを実行
 argument-hint: <new-version>
 allowed-tools: Read, Edit, Bash(git:*), Bash(gh:*)
 ---
@@ -42,8 +42,8 @@ git commit -m "chore: bump version to $1"
 git push -u origin chore/bump-version-$1
 ```
 
-### 7. PR作成
-`gh pr create` でPRを作成：
+### 7. Pull Request作成
+`gh pr create` でPull Requestを作成：
 - タイトル: `chore: bump version to $1`
 - 本文: 変更内容のサマリー
 
@@ -57,6 +57,6 @@ git pull
 ```
 
 ### 10. 結果を報告
-- 作成されたPRのURL
+- 作成されたPull RequestのURL
 - マージ後のコミットハッシュ
 - 更新後のコミット履歴（直近5件）

@@ -19,7 +19,7 @@ description: コマンドの簡潔な説明
 **良い例:**
 
 ```yaml
-description: バージョン更新、CHANGELOG更新、PR作成を実行
+description: バージョン更新、CHANGELOG更新、Pull Request作成を実行
 description: 自然言語から対象ファイルを特定しコミットを作成する
 ```
 
@@ -30,7 +30,7 @@ description: 自然言語から対象ファイルを特定しコミットを作�
 description: ヘルパー
 
 # 冗長
-description: このコマンドはバージョンを更新してCHANGELOGも更新してPRも作成します
+description: このコマンドはバージョンを更新してCHANGELOGも更新してPull Requestも作成します
 ```
 
 ### argument-hint
@@ -52,7 +52,7 @@ argument-hint: [issue-number]
 argument-hint: <new-version>
 
 # 複数引数
-argument-hint: [pr-number] [priority]
+argument-hint: [pull-request-number] [priority]
 argument-hint: <source-file> <target-file>
 ```
 
