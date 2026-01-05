@@ -14,8 +14,10 @@
 | 変数・定数 | camelCase | `selectedIndex`, `filteredShortcuts` |
 | 型・インターフェース | PascalCase | `ActiveWindowInfo`, `Shortcut` |
 | 定数（モジュールレベル） | SCREAMING_SNAKE_CASE | `MACOS_NAME`, `WINDOWS_NAME` |
-| DOM要素 | camelCase + El接尾辞 | `searchInputEl`, `resultsListEl` |
+| DOM要素 | camelCase + El接尾辞（推奨） | `searchInputEl`, `resultsListEl` |
 | イベントハンドラ | handle + 動詞 | `handleToggleTheme`, `handleKeydown` |
+
+> **Note**: 「推奨」はBiomeで強制されない。既存コードとの一貫性を優先する。
 
 ## コード構成
 
@@ -95,7 +97,7 @@ Promiseは `async/await` で処理する。コールバックチェーンは使�
 ```typescript
 async function handleToggleTheme(): Promise<void> {
     await toggleTheme();
-    themeToggleBtn.title = getThemeButtonTitle();
+    themeToggleBtnEl.title = getThemeButtonTitle();
 }
 ```
 
