@@ -82,6 +82,7 @@
     ]
   },
   "bundle": {
+    "createUpdaterArtifacts": true,
     "active": true,
     "category": "Utility",
     "copyright": "",
