@@ -10,25 +10,25 @@
 
 ## 出力形式
 
+````
 ```
----  
 Applied Context:
 - Commands: [実行したコマンド]
 - Rules: [適用したルール名]
 - Skills: [呼び出したスキル]
----
 ```
+````
 
 ## 出力例
 
+````
 ```
----  
 Applied Context:
 - Commands: (none)
 - Rules: documentation
 - Skills: (none)
----
 ```
+````
 
 ## 注意
 
