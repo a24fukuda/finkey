@@ -4,7 +4,7 @@ description: |
     ドキュメントを新規作成する際のワークフローを実行する
     ドキュメント作成, 文書作成, ドキュメント新規, 新しいドキュメント
     ドキュメントの新規作成を依頼された場合に使用する
-allowed-tools: [Read, Write, Edit, Glob]
+allowed-tools: [Read, Write, Edit]
 ---
 
 # Writing Documentation

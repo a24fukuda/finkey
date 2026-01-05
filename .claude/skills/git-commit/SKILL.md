@@ -4,7 +4,7 @@ description: |
     コミット規約に従ってコミットを作成する
     commit, git commit, コミット, 変更をコミット
     コミットについて言及している場合に使用する
-allowed-tools: [Read, Bash]
+allowed-tools: [Read, Bash(git status:*), Bash(git diff:*), Bash(git add:*), Bash(git commit:*)]
 ---
 
 # Git Commit

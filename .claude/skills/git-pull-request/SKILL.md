@@ -4,7 +4,7 @@ description: |
     Pull Request規約に従ってPull Requestを作成する
     pull request, PR, git pr, プルリクエスト
     Pull Requestについて言及している場合に使用する
-allowed-tools: [Read, Bash]
+allowed-tools: [Read, Bash(git status:*), Bash(git log:*), Bash(git diff:*), Bash(gh pr:*)]
 ---
 
 # Git Pull Request
