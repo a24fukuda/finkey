@@ -5,6 +5,13 @@ Finkeyの全ての変更履歴を記録します。
 フォーマットは[Keep a Changelog](https://keepachangelog.com/ja/1.0.0/)に基づき、
 バージョニングは[Semantic Versioning](https://semver.org/lang/ja/)に準拠しています。
 
+## [0.4.9] - 2026-01-06
+
+### Changed
+
+- CIワークフローのトリガーをPRのみに変更
+  - マージ後の冗長なビルド実行を削減
+
 ## [0.4.8] - 2026-01-06
 
 ### Changed
@@ -167,6 +174,7 @@ Finkeyの全ての変更履歴を記録します。
 - TypeScript導入
 - Biome（リンター/フォーマッター）導入
 
+[0.4.9]: https://github.com/a24fukuda/finkey/compare/v0.4.8...v0.4.9
 [0.4.8]: https://github.com/a24fukuda/finkey/compare/v0.4.7...v0.4.8
 [0.4.7]: https://github.com/a24fukuda/finkey/compare/v0.4.6...v0.4.7
 [0.4.6]: https://github.com/a24fukuda/finkey/compare/v0.4.5...v0.4.6
