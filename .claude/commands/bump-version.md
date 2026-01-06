@@ -40,6 +40,8 @@ allowed-tools: Read, Edit, Bash(git:*), Bash(gh:*)
 
 ### 5. コミット
 
+[コミットメッセージ規約](../../docs/git/commit.md) に従ってコミットする。
+
 ```
 git add -A
 git commit -m "chore: bump version to $1"
@@ -50,7 +52,7 @@ git commit -m "chore: bump version to $1"
 1. `gh pr view --json state` で現在のブランチにPRが存在するか確認
 2. PRが存在しない場合:
    - `git push -u origin <branch>`
-   - `gh pr create` でPRを作成
+   - [Pull Request規約](../../docs/git/pull-request.md) に従ってPRを作成
 3. PRが存在する場合:
    - `git push` のみ実行（PRは自動更新）
 
