@@ -4,7 +4,8 @@ param(
     [string]$Action
 )
 
-$RulesDir = Join-Path $PSScriptRoot "..\rules"
+$ProjectRoot = Split-Path $PSScriptRoot -Parent
+$RulesDir = Join-Path $ProjectRoot ".claude\rules"
 $EnabledFile = Join-Path $RulesDir "debug-applied-context.md"
 $DisabledFile = Join-Path $RulesDir "debug-applied-context.md.disabled"
 
