@@ -1,7 +1,7 @@
 ---
 description: バージョン更新からリリースまでを状況に応じて実行
 argument-hint: <new-version>
-allowed-tools: Read, Edit, Bash(git:*), Bash(gh:*)
+allowed-tools: Read, Edit, Bash(git tag:*), Bash(git status:*), Bash(git log:*), Bash(git branch:*), Bash(git checkout:*), Bash(git add:*), Bash(git commit:*), Bash(git push:*), Bash(git pull:*), Bash(gh pr:*)
 ---
 
 ## バージョン更新コマンド
