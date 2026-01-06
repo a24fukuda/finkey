@@ -65,6 +65,11 @@ jobs:
 
             ## Auto Update
             This release supports auto-update. Existing users will be notified automatically.
-          releaseDraft: false
+          releaseDraft: true
           prerelease: false
           args: --target ${{ matrix.target }}
+
+      - name: Publish release
+        run: gh release edit ${{ github.ref_name }} --draft=false
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

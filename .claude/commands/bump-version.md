@@ -18,11 +18,11 @@ allowed-tools: Read, Edit, Bash(git:*), Bash(gh pr:*)
 
 - **存在する場合**: 警告「v$1 は既にリリース済みです」→ 終了
 
-### 2. PR確認
+### 2. Pull Request確認
 
-`gh pr view --json state,url` で現在のブランチのPR状態を確認。
+`gh pr view --json state,url` で現在のブランチのPull Request状態を確認。
 
-#### PRが存在する場合
+#### Pull Requestが存在する場合
 
 `gh pr checks` でCI状態を確認。
 
@@ -49,7 +49,7 @@ allowed-tools: Read, Edit, Bash(git:*), Bash(gh pr:*)
    - 報告「pushしました。CIの再実行を待ってください」
    - 終了
 
-#### PRが存在しない場合
+#### Pull Requestが存在しない場合
 
 次のステップへ進む。
 
@@ -84,15 +84,15 @@ allowed-tools: Read, Edit, Bash(git:*), Bash(gh pr:*)
   - ファイル末尾のバージョンリンクも追加
   - コミット
 
-- **存在するが更新が必要な場合**:
+- **存在するがPull Request作成後に新しいコミットがある場合**:
   - 新しいコミットを既存エントリに追記
   - コミット
 
-### 7. PR作成
+### 7. Pull Request作成
 
 1. `git push -u origin <branch>`
-2. [Pull Request規約](../../docs/git/pull-request.md) に従ってPR作成
-3. 報告「PRを作成しました。CIの完了を待ってから再度実行してください」
+2. [Pull Request規約](../../docs/git/pull-request.md) に従ってPull Request作成
+3. 報告「Pull Requestを作成しました。CIの完了を待ってから再度実行してください」
 
 ## 出力形式
 
@@ -103,7 +103,7 @@ allowed-tools: Read, Edit, Bash(git:*), Bash(gh pr:*)
 
 バージョン:  0.4.9
 ブランチ:    chore/bump-version-0.4.9
-PR:          #35 (Open)
+Pull Request: #35 (Open)
 CI:          ✓ 成功 / ⏳ 実行中 / ✗ 失敗
 タグ:        未作成 / 作成済み
 
