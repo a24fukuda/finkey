@@ -1,12 +1,10 @@
-name: Release
+name: CI
 
 on:
   push:
-    tags:
-      - 'v*'
-
-permissions:
-  contents: write
+    branches: [main]
+  pull_request:
+    branches: [main]
 
 jobs:
   build:
@@ -46,25 +44,7 @@ jobs:
         run: npm run build:ts
 
       - name: Build Tauri app
-        uses: tauri-apps/tauri-action@v0
+        run: npm run build
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-        with:
-          tagName: ${{ github.ref_name }}
-          releaseName: 'Finkey ${{ github.ref_name }}'
-          releaseBody: |
-            ## Changes
-            See [CHANGELOG](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details.
-
-            ## Downloads
-            | Platform | File |
-            |----------|------|
-            | Windows | `.msi` or `.exe` |
-
-            ## Auto Update
-            This release supports auto-update. Existing users will be notified automatically.
-          releaseDraft: false
-          prerelease: false
-          args: --target ${{ matrix.target }}
