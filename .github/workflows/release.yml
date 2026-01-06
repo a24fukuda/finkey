@@ -82,26 +82,20 @@ jobs:
             echo "EOF"
           } >> $GITHUB_OUTPUT
 
-      - name: Setup SSH signing key
+      - name: Create draft release with tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_SIGNING_KEY }}" > ~/.ssh/signing_key
-          chmod 600 ~/.ssh/signing_key
-          ssh-keygen -y -f ~/.ssh/signing_key > ~/.ssh/signing_key.pub
+          VERSION="v${{ steps.check_version.outputs.VERSION }}"
+          COMMIT="${{ steps.resolve_commit.outputs.COMMIT }}"
 
-      - name: Create version tag
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git config gpg.format ssh
-          git config user.signingkey ~/.ssh/signing_key.pub
-          git tag -s "v${{ steps.check_version.outputs.VERSION }}" -m "$(cat <<'EOF'
-          Release v${{ steps.check_version.outputs.VERSION }}
+          # Create draft release (tag is automatically created with Verified signature)
+          gh release create "${VERSION}" \
+            --target "${COMMIT}" \
+            --title "Finkey ${VERSION}" \
+            --draft
 
-          ${{ steps.generate_changelog.outputs.CHANGELOG }}
-          EOF
-          )"
-          git push origin "v${{ steps.check_version.outputs.VERSION }}"
+          echo "Draft release ${VERSION} created successfully"
 
   build:
     needs: validate
