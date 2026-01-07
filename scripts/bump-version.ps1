@@ -53,6 +53,22 @@ if ($currentBranch -eq "main") {
     Write-Warning "Current branch: $currentBranch"
 }
 
+# 未コミット変更チェック
+$uncommitted = git status --porcelain
+if ($uncommitted) {
+    Write-Step "Uncommitted changes detected"
+    Write-Host $uncommitted
+    if ($Force) {
+        Write-Warning "Proceeding with uncommitted changes (-Force specified)"
+    } else {
+        $confirm = Read-Host "`nInclude these changes in the commit? (y/N)"
+        if ($confirm -ne "y") {
+            Write-Warning "Cancelled. Please commit or stash changes first."
+            exit 0
+        }
+    }
+}
+
 # 現在のバージョン取得
 $packageJson = Get-Content "package.json" -Raw | ConvertFrom-Json
 $currentVersion = $packageJson.version
